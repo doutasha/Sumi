@@ -162,3 +162,46 @@ export async function addExtensionRepo(indexUrl, configOverride = null) {
 
 /** Repo Keiyoushi padrão. */
 export const KEIYOUSHI_INDEX_URL = 'https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.json';
+
+/**
+ * Lista repositórios de extensões (GraphQL extensionStores).
+ * @returns {Promise<Array<{name: string, indexUrl: string}>>}
+ */
+export async function listRepos(configOverride = null) {
+  const config = configOverride ?? getSuwayomiConfig();
+  const data = await suwayomiRequest('/graphql', {
+    config,
+    method: 'POST',
+    apiPrefix: '/api',
+    timeout: 30000,
+    retries: 0,
+    body: { query: 'query { extensionStores(first: 100) { nodes { name indexUrl } totalCount } }' },
+  });
+  if (data?.errors?.length) {
+    throw new Error(data.errors[0]?.message || 'Falha ao listar repositórios');
+  }
+  const nodes = data?.data?.extensionStores?.nodes;
+  return Array.isArray(nodes) ? nodes : [];
+}
+
+/** Remove repositório (espelho de ExtensionStoreMutation). */
+export async function removeRepo(indexUrl, configOverride = null) {
+  const config = configOverride ?? getSuwayomiConfig();
+  const data = await suwayomiRequest('/graphql', {
+    config,
+    method: 'POST',
+    apiPrefix: '/api',
+    timeout: 60000,
+    retries: 0,
+    body: {
+      query:
+        'mutation RmRepo($indexUrl: String!) { removeExtensionStore(input: {indexUrl: $indexUrl}) { extensionStore { name indexUrl } } }',
+      variables: { indexUrl },
+    },
+  });
+  if (data?.errors?.length) {
+    throw new Error(data.errors[0]?.message || 'Falha ao remover repositório');
+  }
+  await refreshServerExtensions(config);
+  return data?.data?.removeExtensionStore?.extensionStore ?? null;
+}

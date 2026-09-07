@@ -7,6 +7,7 @@ import MangaDetailPage from './MangaDetailPage.jsx';
 import ChapterReader from './ChapterReader.jsx';
 import OnlineSearch from './OnlineSearch.jsx';
 import ExtensionManager from './ExtensionManager.jsx';
+import SettingsScreen from './SettingsScreen.jsx';
 import OnlineHistory from './OnlineHistory.jsx';
 import OnlineBackup from './OnlineBackup.jsx';
 
@@ -16,6 +17,7 @@ const MAIN_VIEWS = [
   { id: 'backup', icon: 'backup', kanji: '\u4fdd', label: 'Backup', title: 'Backup', jp: '\u4fdd\u5b58' },
   { id: 'extensions', icon: 'extension', kanji: '\u62e1', label: 'Extens\u00f5es', title: 'Extens\u00f5es', jp: '\u62e1\u5f35' },
   { id: 'search', icon: 'travel_explore', kanji: '\u7d22', label: 'Busca', title: 'Busca global', jp: '\u691c\u7d22' },
+  { id: 'settings', icon: 'settings', kanji: '\u8a2d', label: 'Config', title: 'Configurações', jp: '\u8a2d\u5b9a' },
 ];
 
 function parseChapterNumber(chapter) {
@@ -253,6 +255,10 @@ export default function OnlineReader() {
 
           {activeView === 'search' && (
             <OnlineSearch sources={sources} onMangaSelect={openManga} />
+          )}
+
+          {activeView === 'settings' && (
+            <SettingsScreen />
           )}
         </main>
       </div>
