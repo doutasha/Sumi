@@ -361,7 +361,7 @@ pub fn server_wipe_data(
             .map_err(|_| "estado do servidor travado".to_string())?;
         let tracked = inner.child.is_some();
         drop(inner);
-        if (!tracked && port_busy(default_port()) && !preview) {
+        if !tracked && port_busy(default_port()) && !preview {
             return Err(
                 "há outro servidor na porta (sonda/manual?) — pare-o antes de apagar".to_string(),
             );
