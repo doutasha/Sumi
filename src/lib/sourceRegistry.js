@@ -1,12 +1,16 @@
 /**
  * Source Registry
  * Maps sourceId to source implementations.
- * Visible sources are MangaDex and installed Keiyoushi extensions.
+ * Visible sources: MangaDex builtin + server sources (Suwayomi).
+ *
+ * Fase 4c: o caminho dinâmico via .kt (createDynamicSource) foi removido.
+ * Fontes de extensão vêm do motor; o refresh assíncrono é disparado pela UI.
  */
 
 import { MangaDexSource } from './sources/mangadex.js';
-import { getExtensionIconUrl, getInstalledExtensions } from './extensionManager.js';
-import { createDynamicSource } from './sources/dynamicSource.js';
+import { getCachedServerSources } from './parser/sources.js';
+import { createSuwayomiSource } from './parser/manga.js';
+import { getDisabledExtensionPkgs } from './parser/extensions.js';
 
 // ── Static built-in sources ───────────────────────────────────────────────
 
@@ -16,31 +20,44 @@ const BUILTIN_REGISTRY = {
 
 const VISIBLE_BUILTINS = [MangaDexSource];
 
-// ── Dynamic extension source cache ────────────────────────────────────────
+// ── Server (Suwayomi) source cache ────────────────────────────────────────
+// Leitura síncrona do cache localStorage (ver parser/sources.js). O refresh
+// assíncrono é disparado pela UI (ServerStatus); aqui só instanciamos impls.
 
-const dynamicSourceCache = new Map();
+const serverSourceCache = new Map();
 
-function getDynamicSources() {
-  const installed = getInstalledExtensions();
+/** pkg da extensão dona da fonte (extraído do iconUrl), ou null. */
+function sourceOwnerPkg(entry) {
+  const match = String(entry?.iconUrl || '').match(/\/extension\/icon\/([^/?#]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function getServerSources() {
+  const disabled = getDisabledExtensionPkgs();
+  const entries = getCachedServerSources();
   const sources = {};
 
-  for (const [extId, record] of Object.entries(installed)) {
-    if (record.enabled === false || !record.config?.baseUrl) continue;
+  for (const entry of entries) {
+    if (!entry?.id) continue;
+    const owner = sourceOwnerPkg(entry);
+    if (owner && disabled.has(owner)) continue;
 
-    const recordWithIcon = {
-      ...record,
-      iconUrl: record.iconUrl || getExtensionIconUrl(record),
-    };
-
-    // Use cached instance if available and same version
-    if (dynamicSourceCache.has(extId) && dynamicSourceCache.get(extId)._updatedAt === record.updatedAt) {
-      sources[extId] = dynamicSourceCache.get(extId);
+    if (serverSourceCache.has(entry.id)) {
+      sources[entry.id] = serverSourceCache.get(entry.id);
     } else {
-      const source = createDynamicSource(recordWithIcon);
-      source._updatedAt = record.updatedAt;
-      dynamicSourceCache.set(extId, source);
-      sources[extId] = source;
+      try {
+        const source = createSuwayomiSource(entry);
+        serverSourceCache.set(entry.id, source);
+        sources[entry.id] = source;
+      } catch {
+        /* entrada inválida no cache: ignora */
+      }
     }
+  }
+
+  // Drop impls de fontes que saíram do cache
+  for (const id of [...serverSourceCache.keys()]) {
+    if (!sources[id]) serverSourceCache.delete(id);
   }
 
   return sources;
@@ -53,9 +70,9 @@ export function getSourceImpl(sourceId) {
   // Check builtins first
   if (BUILTIN_REGISTRY[sourceId]) return BUILTIN_REGISTRY[sourceId];
 
-  // Check dynamic extensions
-  const dynamic = getDynamicSources();
-  return dynamic[sourceId] ?? null;
+  // Check server sources (Suwayomi)
+  const server = getServerSources();
+  return server[sourceId] ?? null;
 }
 
 /** User-visible built-in sources. */
@@ -66,14 +83,13 @@ export const BUILTIN_SOURCES = VISIBLE_BUILTINS.map(s => ({
   type: s.type,
   iconUrl: s.iconUrl ?? null,
   enabled: true,
+  native: s.id === MangaDexSource.id,
 }));
 
-/** Get all available sources (builtins + installed extensions) */
+/** Get all available sources (builtins + server) */
 export function getAllSources() {
   const builtins = BUILTIN_SOURCES;
-  const dynamic = getDynamicSources();
-
-  const extensionSources = Object.values(dynamic).map(s => ({
+  const server = Object.values(getServerSources()).map(s => ({
     id: s.id,
     name: s.name,
     url: s.url,
@@ -85,10 +101,10 @@ export function getAllSources() {
     unsupportedReason: s.unsupportedReason ?? null,
   }));
 
-  return [...builtins, ...extensionSources];
+  return [...builtins, ...server];
 }
 
-/** Clear the dynamic source cache (call after install/uninstall/update) */
-export function clearDynamicSourceCache() {
-  dynamicSourceCache.clear();
+/** Clear the server source cache (call after refreshServerSources) */
+export function clearServerSourceCache() {
+  serverSourceCache.clear();
 }

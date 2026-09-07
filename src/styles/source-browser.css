@@ -305,6 +305,11 @@
   color: var(--paper-0);
 }
 
+.source-browser--sumi .sb-lang-select option {
+  background: var(--ink-1);
+  color: var(--paper-2);
+}
+
 .source-browser--sumi .sb-filter-panel {
   background: var(--ink-1);
   border: 0;

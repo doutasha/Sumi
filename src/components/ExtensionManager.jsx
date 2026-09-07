@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   BUILTIN_SOURCES,
   getSourceImpl,
@@ -13,6 +13,9 @@ import {
   checkForUpdates,
   getExtensionIconUrl,
 } from '../lib/extensionManager.js';
+import { refreshServerSources, getExtensionSources } from '../lib/parser/sources.js';
+import { refreshServerExtensions } from '../lib/parser/extensions.js';
+import { clearServerSourceCache } from '../lib/sourceRegistry.js';
 import {
   checkSourceCompatibility,
   getSourceHealthStore,
@@ -72,19 +75,6 @@ function healthRank(health) {
   }
 }
 
-function sourceFromInstalledExtension(ext) {
-  return {
-    id: ext.id,
-    name: ext.name,
-    url: ext.baseUrl || ext.config?.baseUrl,
-    type: 'extension',
-    iconUrl: ext.iconUrl || getExtensionIconUrl(ext),
-    lang: ext.lang,
-    enabled: ext.enabled !== false,
-    supportsBrowse: ext.config?.supportsBrowse !== false,
-  };
-}
-
 function checkedAtLabel(timestamp) {
   if (!timestamp) return '';
   const minutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
@@ -95,8 +85,7 @@ function checkedAtLabel(timestamp) {
   return `${Math.round(hours / 24)}d`;
 }
 
-export default function ExtensionManager({ onExtensionsChange, onBrowseSource }) {
-  const [activeTab, setActiveTab] = useState('installed');
+export default function ExtensionManager({ onExtensionsChange, onBrowseSource }) {  const [activeTab, setActiveTab] = useState('installed');
   const [catalog, setCatalog] = useState([]);
   const [installed, setInstalled] = useState({});
   const [loading, setLoading] = useState(false);
@@ -108,10 +97,26 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
   const [pendingUninstall, setPendingUninstall] = useState(null);
   const [healthStore, setHealthStore] = useState(() => getSourceHealthStore());
   const [checkingSources, setCheckingSources] = useState(new Set());
+  const onExtensionsChangeRef = useRef(onExtensionsChange);
+  onExtensionsChangeRef.current = onExtensionsChange;
 
-  // DADOS
+  // DADOS — sempre espelha o servidor ao abrir a tela
   useEffect(() => {
-    setInstalled(getInstalledExtensions());
+    let cancelled = false;
+    (async () => {
+      try {
+        await refreshServerExtensions();
+        await refreshServerSources();
+        clearServerSourceCache();
+      } catch {
+        /* offline: mostra cache */
+      }
+      if (!cancelled) {
+        setInstalled(getInstalledExtensions());
+        onExtensionsChangeRef.current?.();
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // CATALOGO
@@ -127,7 +132,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
     try {
       const data = await fetchCatalog(force);
       setCatalog(data);
-      setUpdatesAvailable(checkForUpdates(data));
+      setUpdatesAvailable(checkForUpdates());
     } catch (err) {
       setError(err.message);
     } finally {
@@ -135,10 +140,20 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
     }
   };
 
+  const syncServerSources = async () => {
+    try {
+      await refreshServerSources();
+    } catch {
+      /* catálogo pronto mesmo se o refresh de fontes falhar */
+    }
+    clearServerSourceCache();
+  };
+
   const handleInstall = async (ext) => {
     setInstalling(prev => new Set([...prev, ext.id]));
     try {
       await installExtension(ext);
+      await syncServerSources();
       setInstalled(getInstalledExtensions());
       onExtensionsChange?.();
     } catch (err) {
@@ -152,8 +167,9 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
     }
   };
 
-  const handleUninstall = (extId) => {
-    uninstallExtension(extId);
+  const handleUninstall = async (extId) => {
+    await uninstallExtension(extId);
+    await syncServerSources();
     setInstalled(getInstalledExtensions());
     onExtensionsChange?.();
   };
@@ -163,6 +179,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
     try {
       const catalogEntry = catalog.find(ext => ext.id === extId);
       await updateExtension(extId, catalogEntry);
+      await syncServerSources();
       setInstalled(getInstalledExtensions());
       setUpdatesAvailable(prev => prev.filter(id => id !== extId));
       onExtensionsChange?.();
@@ -361,18 +378,19 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
                   />
                 ))}
                 {installedList.map(ext => {
-                  const source = sourceFromInstalledExtension(ext);
+                  // Um Navegar só: abre na primeira fonte; o idioma troca
+                  // lá dentro (seletor de fontes-irmãs no browser).
+                  const extSources = getExtensionSources(ext.pkg || ext.id);
                   return (
                     <ExtensionCard
                       key={ext.id}
                       ext={ext}
                       status="installed"
-                      health={healthStore[ext.id]}
-                      isChecking={checkingSources.has(ext.id)}
                       isUpdating={installing.has(ext.id)}
                       hasUpdate={updatesAvailable.includes(ext.id)}
-                      onBrowse={() => onBrowseSource?.(source)}
-                      onCheck={ext.enabled === false ? null : () => handleCheckSource(source)}
+                      onBrowseSource={extSources.length > 0
+                        ? () => onBrowseSource?.(extSources[0], extSources)
+                        : null}
                       onToggle={() => handleToggle(ext.id)}
                       onUninstall={() => setPendingUninstall(ext)}
                       onUpdate={() => handleUpdate(ext.id)}
@@ -389,7 +407,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
             {loading ? (
               <div className="ext-manager__loading">
                 <div className="spinner" />
-                <p>Carregando catálogo do Keiyoushi...</p>
+                <p>Carregando catálogo do motor...</p>
               </div>
             ) : (
               <>
@@ -459,9 +477,8 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       <div className="ext-manager__info">
         <span className="material-symbols-outlined">info</span>
         <p>
-          As extensões vêm do repositório <strong>Keiyoushi</strong>. O Sumi converte o código Kotlin
-          suportado para uso no navegador; fontes com proteções ou formatos ainda não suportados podem
-          aparecer com status limitado.
+          As extensões rodam no <strong>motor local</strong> (APKs reais, compat total).
+          Navegar e testar acontece por <strong>fonte</strong>, na Busca — aqui é só gestão.
         </p>
       </div>
 
@@ -508,6 +525,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
 function ExtensionCard({
   ext, status, health, isChecking, isInstalling, isUpdating, hasUpdate,
   onInstall, onUninstall, onUpdate, onToggle, onBrowse, onCheck,
+  onBrowseSource,
 }) {
   const [imgError, setImgError] = useState(false);
   const iconUrl = ext.iconUrl || (status !== 'builtin' ? getExtensionIconUrl(ext) : null);
@@ -534,7 +552,7 @@ function ExtensionCard({
       <div className="ext-card__info">
         <div className="ext-card__name-row">
           <h3 className="ext-card__name">{ext.name}</h3>
-          {isBuiltIn ? (
+          {ext.native ? (
             <span className="ext-card__update-badge">NATIVA</span>
           ) : (
             <span className="ext-card__lang">{(ext.lang || 'en').toUpperCase()}</span>
@@ -542,15 +560,12 @@ function ExtensionCard({
           {hasUpdate && <span className="ext-card__update-badge">UPDATE</span>}
         </div>
 
-        {ext.config?.baseUrl && <p className="ext-card__url">{ext.config.baseUrl}</p>}
-        {ext.baseUrl && !ext.config?.baseUrl && <p className="ext-card__url">{ext.baseUrl}</p>}
-        {ext.url && !ext.baseUrl && !ext.config?.baseUrl && <p className="ext-card__url">{ext.url}</p>}
+        {ext.baseUrl && <p className="ext-card__url">{ext.baseUrl}</p>}
+        {ext.url && !ext.baseUrl && <p className="ext-card__url">{ext.url}</p>}
 
-        {ext.config?.multisrc && ext.config.multisrc !== 'unknown' && (
-          <span className="ext-card__multisrc">{ext.config.multisrc}</span>
-        )}
-        {isBuiltIn && <span className="ext-card__multisrc">Fonte nativa</span>}
-        {status !== 'available' && (
+        {ext.version && <span className="ext-card__multisrc">v{ext.version}</span>}
+        {isBuiltIn && ext.native && <span className="ext-card__multisrc">Fonte nativa</span>}
+        {status !== 'available' && health?.status && (
           <SourceHealth health={health} isChecking={isChecking} />
         )}
       </div>
@@ -580,6 +595,18 @@ function ExtensionCard({
           >
             <span className="material-symbols-outlined">{browseUnsupported ? 'info' : 'explore'}</span>
             {browseUnsupported ? 'Status' : 'Navegar'}
+          </button>
+        )}
+
+        {onBrowseSource && ext.enabled !== false && (
+          <button
+            type="button"
+            className="ext-card__btn ext-card__btn--browse"
+            onClick={() => onBrowseSource?.()}
+            title="Navegar"
+          >
+            <span className="material-symbols-outlined">explore</span>
+            Navegar
           </button>
         )}
 

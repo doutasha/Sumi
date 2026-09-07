@@ -481,6 +481,71 @@
   color: var(--ink-0);
 }
 
+.ext-card__sources {
+  display: flex;
+  flex-basis: 100%;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ext-card__source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.ext-card__source-lang {
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-2);
+  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  outline: none;
+  padding: 7px 10px;
+  text-transform: uppercase;
+}
+
+.ext-card__source-lang:hover {
+  border-color: var(--paper-0);
+  color: var(--paper-0);
+}
+
+.ext-card__source-lang:focus {
+  border-color: var(--shu);
+  color: var(--paper-0);
+}
+
+.ext-card__source-lang option {
+  background: var(--ink-1);
+  color: var(--paper-2);
+}
+
+.ext-card__source-item {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--ink-4);
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  gap: 8px;
+  justify-content: space-between;
+  letter-spacing: 0.06em;
+  padding: 7px 10px;
+  text-transform: uppercase;
+}
+
+.ext-card__source-item:hover {
+  border-color: var(--paper-0);
+  color: var(--paper-0);
+}
+
 .ext-card__btn--install:hover,
 .ext-card__btn--browse:hover {
   background: var(--paper-1);

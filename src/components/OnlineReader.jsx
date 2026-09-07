@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getSources, getCategories, getFavorites, getReadingHistory, getChapterStorageKey } from '../lib/onlineStorage.js';
-import { clearDynamicSourceCache } from '../lib/sourceRegistry.js';
+import { clearServerSourceCache } from '../lib/sourceRegistry.js';
 import OnlineLibrary from './OnlineLibrary.jsx';
 import SourceBrowser from './SourceBrowser.jsx';
 import MangaDetailPage from './MangaDetailPage.jsx';
@@ -83,19 +83,19 @@ export default function OnlineReader() {
   };
 
   const handleExtensionsChange = useCallback(() => {
-    clearDynamicSourceCache();
+    clearServerSourceCache();
     loadData();
   }, []);
 
   const handleBackupRestore = useCallback(() => {
-    clearDynamicSourceCache();
+    clearServerSourceCache();
     loadData();
   }, []);
 
   const pushNav = (page) => setNavStack(prev => [...prev, page]);
   const popNav = () => setNavStack(prev => prev.slice(0, -1));
 
-  const openSource = useCallback((source) => pushNav({ type: 'source-browser', source }), []);
+  const openSource = useCallback((source, siblings = null) => pushNav({ type: 'source-browser', source, siblings }), []);
   const openManga = useCallback((manga) => pushNav({ type: 'manga-detail', manga }), []);
 
   const openChapter = useCallback((ch, manga, chapters) => {
@@ -122,7 +122,7 @@ export default function OnlineReader() {
     if (top.type === 'source-browser') {
       return (
         <div className="online-reader sumi-reader sumi-reader--stack">
-          <SourceBrowser source={top.source} onMangaSelect={openManga} onBack={popNav} />
+          <SourceBrowser source={top.source} siblings={top.siblings ?? null} onMangaSelect={openManga} onBack={popNav} />
         </div>
       );
     }

@@ -1,5 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getAllSources, getSourceImpl } from '../lib/sourceRegistry.js';
+import ServerStatus from './ServerStatus.jsx';
+import { SERVER_SOURCES_EVENT } from '../lib/parser/sources.js';
+import { getOnlineSettings, saveOnlineSettings } from '../lib/onlineStorage.js';
+
+function readContentLang() {
+  try {
+    return getOnlineSettings()?.contentLang || 'all';
+  } catch {
+    return 'all';
+  }
+}
 
 export default function OnlineSearch({ sources, onMangaSelect }) {
   const [query, setQuery] = useState('');
@@ -7,6 +18,8 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [searched, setSearched] = useState(false);
+  const [serverTick, setServerTick] = useState(0);
+  const [contentLang, setContentLang] = useState(readContentLang);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
 
@@ -17,17 +30,46 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
         source.type === 'extension' && !sources.some(existing => existing.id === source.id)
       ),
     ];
-  }, [sources]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sources, serverTick]);
 
   const activeSources = useMemo(() => {
     return availableSources.filter(source => {
       const impl = getSourceImpl(source.id);
-      return source.enabled && impl?.search && impl.supportsBrowse !== false;
+      const langOk = contentLang === 'all'
+        || !source.lang
+        || source.lang === 'all'
+        || source.lang === contentLang;
+      return source.enabled && impl?.search && impl.supportsBrowse !== false && langOk;
     });
-  }, [availableSources]);
+  }, [availableSources, contentLang]);
+
+  const contentLangOptions = useMemo(() => {
+    const set = new Set();
+    for (const source of availableSources) {
+      if (source.lang && source.lang !== 'all') set.add(source.lang);
+    }
+    return [...set].sort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableSources, serverTick]);
+
+  const handleContentLang = useCallback((lang) => {
+    setContentLang(lang);
+    try {
+      saveOnlineSettings({ ...getOnlineSettings(), contentLang: lang });
+    } catch {
+      /* ignora */
+    }
+  }, []);
 
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const onServerSources = () => setServerTick(t => t + 1);
+    window.addEventListener(SERVER_SOURCES_EVENT, onServerSources);
+    return () => window.removeEventListener(SERVER_SOURCES_EVENT, onServerSources);
   }, []);
 
   const search = useCallback(async (value) => {
@@ -105,6 +147,7 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
           <p className="search-page-sub">
             Pesquise em todas as fontes instaladas que possuem suporte a busca.
           </p>
+          <ServerStatus onChange={() => setServerTick(t => t + 1)} />
         </div>
 
         <div className="search-page-metrics">
@@ -146,6 +189,19 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
           ))}
           {hiddenSourceCount > 0 && (
             <span className="search-page-source-chip">+{hiddenSourceCount}</span>
+          )}
+          {contentLangOptions.length > 1 && (
+            <select
+              className="sb-lang-select"
+              value={contentLang}
+              onChange={e => handleContentLang(e.target.value)}
+              title="Idioma da busca"
+            >
+              <option value="all">Todos os idiomas</option>
+              {contentLangOptions.map(lang => (
+                <option key={lang} value={lang}>{lang.toUpperCase()}</option>
+              ))}
+            </select>
           )}
         </div>
       )}

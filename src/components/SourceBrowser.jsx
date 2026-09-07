@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getSourceImpl } from '../lib/sourceRegistry.js';
+import { getCachedServerSources, sourceOwnerPkg } from '../lib/parser/sources.js';
 
 const LANGS = [
   { value: 'en', label: 'English' },
@@ -65,7 +66,7 @@ function getModeLabel(tab, isSearching) {
   }[tab] ?? 'Navega\u00e7\u00e3o';
 }
 
-export default function SourceBrowser({ source, onMangaSelect, onBack }) {
+export default function SourceBrowser({ source, siblings, onMangaSelect, onBack }) {
   const [tab, setTab] = useState('popular');
   const [query, setQuery] = useState('');
   const [inputValue, setInputValue] = useState('');
@@ -81,7 +82,23 @@ export default function SourceBrowser({ source, onMangaSelect, onBack }) {
 
   const debounceRef = useRef(null);
   const viewportWidthRef = useRef(typeof window !== 'undefined' ? window.innerWidth : 0);
-  const impl = useMemo(() => getSourceImpl(source.id), [source.id]);
+  // Fonte ativa: troca entre fontes-irmãs (mesma extensão, outro idioma) sem sair da tela.
+  const [activeSource, setActiveSource] = useState(source);
+  const impl = useMemo(() => getSourceImpl(activeSource.id), [activeSource.id]);
+  const siblingOptions = useMemo(() => {
+    // Caminho principal: irmãs passadas na navegação. Fallback: deriva do
+    // cache pelo pkg dono (cura cliques antigos / estado HMR preservado).
+    let incoming = Array.isArray(siblings) ? siblings : [];
+    if (incoming.length === 0 && typeof activeSource.id === 'string' && activeSource.id.startsWith('suwayomi:')) {
+      const owner = sourceOwnerPkg(activeSource.iconUrl);
+      if (owner) {
+        incoming = getCachedServerSources().filter(s => sourceOwnerPkg(s.iconUrl) === owner);
+      }
+    }
+    const list = [source, ...incoming];
+    const seen = new Set();
+    return list.filter(s => s?.id && !seen.has(s.id) && (seen.add(s.id), true));
+  }, [source, siblings, activeSource.id, activeSource.iconUrl]);
   const filterDefs = useMemo(() => (Array.isArray(impl?.filters) ? impl.filters : []), [impl]);
   const supportsFilters = filterDefs.length > 0;
   const activeFilterCount = useMemo(() => countActiveFilters(filterDefs, filterValues), [filterDefs, filterValues]);
@@ -93,9 +110,20 @@ export default function SourceBrowser({ source, onMangaSelect, onBack }) {
 
   const supportsLanguageSelect = languageOptions.length > 0;
   const fixedLanguageLabel = useMemo(() => {
-    if (supportsLanguageSelect || !source.lang) return null;
-    return LANGS.find(lang => lang.value === source.lang)?.label ?? source.lang.toUpperCase();
-  }, [source.lang, supportsLanguageSelect]);
+    if (supportsLanguageSelect || !activeSource.lang) return null;
+    return LANGS.find(lang => lang.value === activeSource.lang)?.label ?? activeSource.lang.toUpperCase();
+  }, [activeSource.lang, supportsLanguageSelect]);
+
+  const handleSiblingChange = useCallback((nextId) => {
+    const next = siblingOptions.find(s => s.id === nextId);
+    if (!next || next.id === activeSource.id) return;
+    setActiveSource(next);
+    setPage(1);
+    setMangas([]);
+    setTotal(0);
+    setError(null);
+    window.scrollTo(0, 0);
+  }, [siblingOptions, activeSource.id]);
 
   useEffect(() => {
     const onResize = () => {
@@ -212,7 +240,7 @@ export default function SourceBrowser({ source, onMangaSelect, onBack }) {
 
   if (!impl || impl.supportsBrowse === false) {
     const message = !impl
-      ? 'Esta fonte n\u00e3o possui integra\u00e7\u00e3o de API ainda.'
+      ? `Esta fonte não possui integração de API ainda.${source?.id ? ` (${source.id})` : ''}`
       : 'Esta extens\u00e3o foi instalada, mas o parser ainda n\u00e3o suporta o formato dela.';
 
     return (
@@ -237,7 +265,7 @@ export default function SourceBrowser({ source, onMangaSelect, onBack }) {
   return (
     <div className="source-browser source-browser--sumi">
       <BrowserHeader
-        source={source}
+        source={activeSource}
         onBack={onBack}
         mode={modeLabel}
         total={total}
@@ -263,6 +291,18 @@ export default function SourceBrowser({ source, onMangaSelect, onBack }) {
         {supportsLanguageSelect && (
           <select className="sb-lang-select" value={language} onChange={e => setLanguage(e.target.value)}>
             {languageOptions.map(lang => <option key={lang.value} value={lang.value}>{lang.label}</option>)}
+          </select>
+        )}
+        {siblingOptions.length > 1 && (
+          <select
+            className="sb-lang-select"
+            value={activeSource.id}
+            onChange={e => handleSiblingChange(e.target.value)}
+            title="Idioma da fonte"
+          >
+            {siblingOptions.map(s => (
+              <option key={s.id} value={s.id}>{(s.lang || '??').toUpperCase()}</option>
+            ))}
           </select>
         )}
       </BrowserHeader>
