@@ -23,14 +23,65 @@ fn apply_nvidia_wayland_workaround() {
 /// Downloads que no navegador precisariam de proxy CORS passam pelo
 /// plugin `http` (chamado de `desktop/frontend-integration/tauri-env.js`),
 /// executado aqui no Rust — sem depender de corsproxy.io em producao.
+///
+/// O motor Suwayomi-Server roda como processo filho gerenciado em
+/// `server.rs` (fase 4d-2): autostart oculto, data-dir fixo, heap capado,
+/// health via frontend e kill-on-close (nunca deixar java orfao).
+mod server;
+
+use tauri::{Emitter, Manager};
+
 fn main() {
     #[cfg(target_os = "linux")]
     apply_nvidia_wayland_workaround();
 
     tauri::Builder::default()
+        .manage(server::ServerState::default())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .run(tauri::generate_context!())
-        .expect("error while running Sumi desktop app");
+        .invoke_handler(tauri::generate_handler![
+            server::server_status,
+            server::server_start,
+            server::server_stop,
+            server::server_download,
+        ])
+        // Autostart oculto (4d-2 item 1): tenta subir o motor junto do app.
+        // Nunca falha o boot: sem arquivos ou porta ocupada, só recua e o
+        // usuário inicia pelo Config. Resultado vai no evento p/ debug.
+        .setup(|app| {
+            let report = server::autostart(app.handle());
+            app.emit("server-autostart", &report)
+                .map_err(|e| e.to_string())?;
+            Ok(())
+        })
+        // Kill-on-close (parte 1): janela pedindo para fechar mata o filho.
+        // Sem tray no Sumi: última janela destruída encerra o app (o que
+        // dispara RunEvent::Exit abaixo e remata o filho por garantia).
+        .on_window_event(|window, event| {
+            match event {
+                tauri::WindowEvent::CloseRequested { .. } => {
+                    if let Some(state) = window.try_state::<server::ServerState>() {
+                        server::shutdown_server(&state);
+                    }
+                }
+                tauri::WindowEvent::Destroyed => {
+                    let app = window.app_handle();
+                    if app.webview_windows().is_empty() {
+                        app.exit(0);
+                    }
+                }
+                _ => {}
+            }
+        })
+        .build(tauri::generate_context!())
+        .expect("error while running Sumi desktop app")
+        // Kill-on-close (parte 2): qualquer saída do event loop mata o filho.
+        .run(|app, event| {
+            if matches!(event, tauri::RunEvent::Exit) {
+                if let Some(state) = app.try_state::<server::ServerState>() {
+                    server::shutdown_server(&state);
+                }
+            }
+        });
 }

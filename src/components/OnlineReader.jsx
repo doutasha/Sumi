@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getSources, getCategories, getFavorites, getReadingHistory, getChapterStorageKey } from '../lib/onlineStorage.js';
 import { clearServerSourceCache } from '../lib/sourceRegistry.js';
+import { checkHealth, getSuwayomiConfig } from '../lib/parser/connection.js';
+import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js';
+import { watchServer } from '../../desktop/frontend-integration/sidecar.js';
 import OnlineLibrary from './OnlineLibrary.jsx';
 import SourceBrowser from './SourceBrowser.jsx';
 import MangaDetailPage from './MangaDetailPage.jsx';
@@ -76,6 +79,14 @@ export default function OnlineReader() {
   const [navStack, setNavStack] = useState([]);
 
   useEffect(() => { loadData(); }, []);
+
+  // Vigia do motor embutido (desktop): relança sozinho se o java morrer.
+  // Só no Tauri; no browser vira no-op. Silencioso por desenho.
+  useEffect(() => {
+    if (!isTauriRuntime()) return undefined;
+    const stop = watchServer({ checkHealth, getConfig: getSuwayomiConfig });
+    return stop;
+  }, []);
 
   const loadData = () => {
     setSources(getSources());

@@ -4,6 +4,8 @@ import { checkHealth, getSuwayomiConfig, saveSuwayomiConfig } from '../lib/parse
 import { addExtensionRepo, listRepos, removeRepo, refreshServerExtensions } from '../lib/parser/extensions.js';
 import { refreshServerSources } from '../lib/parser/sources.js';
 import { clearServerSourceCache } from '../lib/sourceRegistry.js';
+import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js';
+import { sidecarStatus, sidecarStart, sidecarStop, sidecarDownload } from '../../desktop/frontend-integration/sidecar.js';
 
 /**
  * SettingsScreen — Configurações > Motor + Biblioteca > Repositórios.
@@ -20,6 +22,10 @@ export default function SettingsScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [isDesktop] = useState(() => isTauriRuntime());
+  const [sidecar, setSidecar] = useState(null);
+  const [sidecarBusy, setSidecarBusy] = useState(false);
+  const [dlProgress, setDlProgress] = useState(null);
 
   const loadRepos = async (cfg = config) => {
     setReposLoading(true);
@@ -35,6 +41,9 @@ export default function SettingsScreen() {
   useEffect(() => {
     checkHealth().then(setHealth).catch(() => setHealth({ online: false }));
     loadRepos();
+    if (isTauriRuntime()) {
+      sidecarStatus().then(setSidecar).catch(() => setSidecar(null));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,6 +66,70 @@ export default function SettingsScreen() {
     const next = saveSuwayomiConfig({ ...config, enabled: !config.enabled });
     setConfig(next);
     setHealth(await checkHealth(next).catch((err) => ({ online: false, message: err.message })));
+  };
+
+  const refreshSidecar = async () => {
+    try {
+      setSidecar(await sidecarStatus());
+    } catch {
+      setSidecar(null);
+    }
+    setHealth(await checkHealth().catch((err) => ({ online: false, message: err.message })));
+  };
+
+  const handleSidecarStart = async () => {
+    setSidecarBusy(true);
+    try {
+      await sidecarStart();
+      await refreshSidecar();
+      flash('Motor embutido iniciado.');
+    } catch (err) {
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setSidecarBusy(false);
+    }
+  };
+
+  const handleSidecarStop = async () => {
+    setSidecarBusy(true);
+    try {
+      await sidecarStop();
+      await refreshSidecar();
+      flash('Motor embutido parado.');
+    } catch (err) {
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setSidecarBusy(false);
+    }
+  };
+
+  const handleSidecarDownload = async () => {
+    setSidecarBusy(true);
+    setDlProgress({ phase: 'jar', received: 0, total: 1 });
+    try {
+      const res = await sidecarDownload({
+        onProgress: (ev) => setDlProgress(ev),
+      });
+      setDlProgress(null);
+      await refreshSidecar();
+      flash(res?.cached ? 'Motor já estava baixado.' : `Motor baixado (${res?.javaVersion ?? 'java ok'}).`);
+    } catch (err) {
+      setDlProgress(null);
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setSidecarBusy(false);
+    }
+  };
+
+  const dlLabel = () => {
+    if (!dlProgress) return null;
+    const { phase, received = 0, total = 0 } = dlProgress;
+    if (phase === 'done') return 'Concluído.';
+    if (phase === 'extract') return `Extraindo JRE… (${received}/${total} arquivos)`;
+    const pct = total > 0 ? Math.round((received / total) * 100) : 0;
+    const mb = (v) => `${(v / 1048576).toFixed(0)}MB`;
+    const name = phase === 'jar' ? 'JAR' : 'JRE';
+    return `Baixando ${name}… ${pct}% (${mb(received)}/${mb(total)})`;
   };
 
   const syncAfterRepoChange = async (cfg = config) => {
@@ -168,6 +241,38 @@ export default function SettingsScreen() {
           </span>
         </div>
       </section>
+
+      {isDesktop && (
+        <section className="ext-manager__content">
+          <p className="mono-cap">Motor embutido (desktop)</p>
+          <p className="ext-manager__subtitle">
+            {sidecar?.running
+              ? `Rodando (PID ${sidecar.info?.pid}) em ${sidecar.dataDir}`
+              : sidecar?.needsDownload
+                ? 'JRE slim + JAR (~220MB) ainda não baixados. O download é sob demanda, com progresso e verificação SHA-256.'
+                : 'Parado. O app fecha o processo junto (kill-on-close).'}
+          </p>
+          {dlProgress && (
+            <p className="ext-manager__subtitle">{dlLabel()}</p>
+          )}
+          <div className="ext-manager__count">
+            <span>{sidecar?.running ? 'Parar motor' : sidecar?.needsDownload ? 'Baixar motor' : 'Iniciar motor oculto'}</span>
+            <span>
+              <button
+                className="ext-manager__refresh"
+                onClick={sidecar?.running ? handleSidecarStop : sidecar?.needsDownload ? handleSidecarDownload : handleSidecarStart}
+                disabled={sidecarBusy}
+                title={sidecar?.running ? 'Parar motor' : sidecar?.needsDownload ? 'Baixar JRE + JAR' : 'Iniciar motor'}
+              >
+                <span className="material-symbols-outlined">{sidecar?.running ? 'stop' : sidecar?.needsDownload ? 'download' : 'play_arrow'}</span>
+              </button>{' '}
+              <button className="ext-manager__refresh" onClick={refreshSidecar} title="Atualizar status">
+                <span className="material-symbols-outlined">refresh</span>
+              </button>
+            </span>
+          </div>
+        </section>
+      )}
 
       <section className="ext-manager__content">
         <p className="mono-cap">Biblioteca / repositório de extensões</p>
