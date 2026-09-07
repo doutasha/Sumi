@@ -1,0 +1,691 @@
+/* ============================================================
+   EXTENSIONS
+   Keiyoushi catalog, installed sources and compatibility status.
+   ============================================================ */
+
+/* SUMI - EXTENSOES */
+.ext-manager {
+  margin: 0;
+  max-width: none;
+  padding: 0;
+}
+
+.ext-manager__hero {
+  align-items: flex-end;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 22px 24px;
+}
+
+.ext-manager__title-row {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.ext-manager__title {
+  color: var(--paper-0);
+  font-family: var(--f-display);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 0.95;
+  margin: 0;
+}
+
+.ext-manager__jp {
+  color: var(--shu);
+  font-family: var(--f-jp-serif);
+  font-size: 22px;
+}
+
+.ext-manager__subtitle {
+  color: var(--paper-2);
+  display: block;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 12px 0 0;
+  max-width: 620px;
+}
+
+.ext-manager__stats {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, minmax(82px, auto));
+}
+
+.ext-manager__stat-value {
+  color: var(--paper-0);
+  display: block;
+  font-family: var(--f-display);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: right;
+}
+
+.ext-manager__stat-label {
+  color: var(--paper-3);
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  margin-top: 6px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.ext-manager__toolbar {
+  align-items: stretch;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  display: grid;
+  gap: 0;
+  grid-template-columns: minmax(340px, 0.9fr) minmax(320px, 1.1fr);
+  margin-bottom: 18px;
+}
+
+.ext-manager__tabs {
+  background: transparent;
+  border-radius: 0;
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 0;
+  padding: 0;
+}
+
+.ext-manager__tab {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-3);
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  gap: 7px;
+  justify-content: center;
+  letter-spacing: 0.08em;
+  min-height: 52px;
+  padding: 0 14px;
+  text-transform: uppercase;
+  transition: background var(--transition), color var(--transition);
+}
+
+.ext-manager__tab:hover {
+  background: var(--ink-2);
+  color: var(--paper-0);
+}
+
+.ext-manager__tab.active {
+  background: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.ext-manager__tab .material-symbols-outlined {
+  font-size: 18px !important;
+}
+
+.ext-manager__filters {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.ext-manager__search {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  border-right: 1px solid var(--ink-4);
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  min-height: 52px;
+  min-width: 0;
+  padding: 0 16px;
+}
+
+.ext-manager__search:focus-within {
+  background: var(--ink-2);
+}
+
+.ext-manager__search .material-symbols-outlined {
+  color: var(--shu);
+}
+
+.ext-manager__search input {
+  background: transparent;
+  border: 0;
+  color: var(--paper-0);
+  flex: 1;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  min-width: 0;
+  outline: none;
+}
+
+.ext-manager__search input::placeholder {
+  color: var(--paper-4);
+}
+
+.ext-manager__search-clear {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--paper-3);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.ext-manager__search-clear:hover {
+  color: var(--paper-0);
+}
+
+.ext-manager__lang-filter {
+  display: flex;
+}
+
+.ext-manager__lang-filter select {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--paper-2);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  min-height: 52px;
+  min-width: 164px;
+  padding: 0 16px;
+  text-transform: uppercase;
+}
+
+.ext-manager__lang-filter select:focus {
+  background: var(--ink-2);
+}
+
+.ext-manager__content {
+  min-height: 260px;
+}
+
+.ext-manager__count {
+  align-items: center;
+  border-bottom: 1px solid var(--ink-4);
+  color: var(--paper-3);
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  justify-content: space-between;
+  letter-spacing: 0.12em;
+  margin: 0;
+  padding: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.ext-manager__refresh {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--paper-3);
+  display: flex;
+  justify-content: center;
+  padding: 6px;
+  transition: background var(--transition), color var(--transition);
+}
+
+.ext-manager__refresh:hover {
+  background: var(--ink-2);
+  color: var(--shu);
+}
+
+.ext-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ext-card {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  min-height: 74px;
+  padding: 12px 14px;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.ext-card:hover {
+  background: var(--ink-2);
+  border-color: var(--ink-5);
+}
+
+.ext-card--disabled {
+  opacity: 0.52;
+}
+
+.ext-card__icon {
+  align-items: center;
+  background: var(--ink-2);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  display: flex;
+  flex-shrink: 0;
+  height: 46px;
+  justify-content: center;
+  overflow: hidden;
+  width: 46px;
+}
+
+.ext-card__icon img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.ext-card__icon .material-symbols-outlined {
+  color: var(--shu);
+  font-size: 24px !important;
+}
+
+.ext-card__info {
+  min-width: 0;
+}
+
+.ext-card__name-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ext-card__name {
+  color: var(--paper-0);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ext-card__lang,
+.ext-card__update-badge,
+.ext-card__multisrc {
+  border-radius: 0;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.ext-card__lang,
+.ext-card__multisrc {
+  display: inline-block;
+  background: transparent;
+  border: 1px solid var(--ink-4);
+  color: var(--paper-3);
+}
+
+.ext-card__update-badge {
+  background: var(--shu);
+  border: 1px solid var(--shu);
+  color: var(--paper-0);
+}
+
+.ext-card__url {
+  color: var(--paper-4);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  margin: 5px 0 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ext-card__health {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ext-card__health-status {
+  align-items: center;
+  border: 1px solid var(--ink-4);
+  color: var(--paper-3);
+  display: inline-flex;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  gap: 5px;
+  letter-spacing: 0.1em;
+  min-height: 24px;
+  padding: 0 7px;
+  text-transform: uppercase;
+}
+
+.ext-card__health-status .material-symbols-outlined {
+  font-size: 14px !important;
+}
+
+.ext-card__health-status small {
+  color: var(--paper-4);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.ext-card__health--compatible .ext-card__health-status {
+  border-color: rgba(139,209,124,0.45);
+  color: var(--green);
+}
+
+.ext-card__health--partial .ext-card__health-status,
+.ext-card__health--checking .ext-card__health-status {
+  border-color: rgba(217,58,43,0.5);
+  color: var(--shu);
+}
+
+.ext-card__health--failing .ext-card__health-status,
+.ext-card__health--unsupported .ext-card__health-status {
+  border-color: rgba(255,90,78,0.45);
+  color: var(--danger);
+}
+
+.ext-card__health-steps {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ext-card__health-step {
+  border: 1px solid var(--ink-4);
+  color: var(--paper-4);
+  font-family: var(--f-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 4px 5px;
+  text-transform: uppercase;
+}
+
+.ext-card__health-step.ok {
+  border-color: rgba(139,209,124,0.35);
+  color: var(--green);
+}
+
+.ext-card__health-step.fail {
+  border-color: rgba(255,90,78,0.35);
+  color: var(--danger);
+}
+
+.ext-card__actions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.ext-card__btn {
+  align-items: center;
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 600;
+  gap: 6px;
+  letter-spacing: 0.08em;
+  min-height: 34px;
+  padding: 0 11px;
+  text-transform: uppercase;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.ext-card__btn .material-symbols-outlined {
+  font-size: 17px !important;
+}
+
+.ext-card__btn--install,
+.ext-card__btn--browse {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.ext-card__btn--install:hover,
+.ext-card__btn--browse:hover {
+  background: var(--paper-1);
+  border-color: var(--paper-1);
+}
+
+.ext-card__btn--status {
+  background: transparent;
+  color: var(--paper-3);
+}
+
+.ext-card__btn--status:hover {
+  border-color: var(--shu);
+  color: var(--shu);
+}
+
+.ext-card__btn--check {
+  background: transparent;
+  color: var(--paper-3);
+}
+
+.ext-card__btn--check:hover:not(:disabled) {
+  border-color: var(--paper-2);
+  color: var(--paper-0);
+}
+
+.ext-card__btn--check:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.ext-card__btn--update {
+  background: var(--shu);
+  border-color: var(--shu);
+  color: var(--paper-0);
+}
+
+.ext-card__btn--update:hover {
+  background: var(--shu-dim);
+  border-color: var(--shu-dim);
+}
+
+.ext-card__btn--toggle,
+.ext-card__btn--uninstall {
+  background: transparent;
+  color: var(--paper-3);
+  padding: 0 8px;
+}
+
+.ext-card__btn--toggle:hover {
+  border-color: var(--paper-2);
+  color: var(--paper-0);
+}
+
+.ext-card__btn--uninstall:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.ext-manager__update-all {
+  align-items: center;
+  background: var(--shu);
+  border: 1px solid var(--shu);
+  border-radius: 0;
+  color: var(--paper-0);
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  gap: 8px;
+  justify-content: center;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  min-height: 42px;
+  padding: 0 14px;
+  text-transform: uppercase;
+  transition: background var(--transition), border-color var(--transition);
+  width: 100%;
+}
+
+.ext-manager__update-all:hover {
+  background: var(--shu-dim);
+}
+
+.ext-manager__loading,
+.ext-manager__empty,
+.ext-manager__error {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  color: var(--paper-2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 260px;
+  padding: 42px 20px;
+  text-align: center;
+}
+
+.ext-manager__loading .material-symbols-outlined,
+.ext-manager__empty .material-symbols-outlined {
+  color: var(--shu);
+  font-size: 42px !important;
+  opacity: 1;
+}
+
+.ext-manager__empty p,
+.ext-manager__loading p,
+.ext-manager__error p {
+  margin: 0;
+}
+
+.ext-manager__empty-hint {
+  color: var(--paper-4);
+  font-size: 13px;
+}
+
+.ext-manager__error {
+  color: var(--danger);
+  margin-bottom: 14px;
+}
+
+.ext-manager__error button {
+  background: var(--shu);
+  border: 1px solid var(--shu);
+  border-radius: 0;
+  color: var(--paper-0);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 9px 14px;
+  text-transform: uppercase;
+}
+
+.ext-manager__info {
+  align-items: flex-start;
+  background: transparent;
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-3);
+  display: flex;
+  font-size: 13px;
+  gap: 12px;
+  line-height: 1.6;
+  margin-top: 18px;
+  padding: 14px 16px;
+}
+
+.ext-manager__info .material-symbols-outlined {
+  color: var(--shu);
+}
+
+@media (max-width: 980px) {
+  .ext-manager__hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ext-manager__stats {
+    width: 100%;
+  }
+
+  .ext-manager__stat-value,
+  .ext-manager__stat-label {
+    text-align: left;
+  }
+
+  .ext-manager__toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .ext-manager__tabs {
+    border-bottom: 1px solid var(--ink-4);
+  }
+}
+
+@media (max-width: 720px) {
+  .ext-manager__hero {
+    padding: 18px 16px;
+  }
+
+  .ext-manager__stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ext-manager__filters {
+    flex-direction: column;
+  }
+
+  .ext-manager__search {
+    border-bottom: 1px solid var(--ink-4);
+    border-right: 0;
+  }
+
+  .ext-manager__lang-filter select {
+    width: 100%;
+  }
+
+  .ext-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .ext-card__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}

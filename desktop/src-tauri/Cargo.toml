@@ -1,0 +1,25 @@
+[package]
+name = "sumi"
+version = "1.0.0"
+description = "Sumi — leitor local de mangas (desktop)"
+authors = ["Sumi"]
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-http = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# by default Tauri runs in production mode
+# when `tauri dev` runs it is executed with `cargo run --no-default-features` if `dev-url` is set
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

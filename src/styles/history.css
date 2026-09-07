@@ -1,0 +1,269 @@
+/* ============================================================
+   HISTORY
+   Local reading history cards and clear action.
+   ============================================================ */
+
+/* ============================================================
+   SUMI - HISTORY
+   ============================================================ */
+.online-history {
+  display: grid;
+  gap: 18px;
+}
+
+.online-history__summary {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+  padding: 22px 24px;
+}
+
+.online-history__summary h2 {
+  color: var(--paper-0);
+  font-family: var(--f-display);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 500;
+  line-height: 1;
+  margin: 6px 0 0;
+}
+
+.online-history__actions {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.online-history__metric span {
+  color: var(--paper-0);
+  display: block;
+  font-family: var(--f-display);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: right;
+}
+
+.online-history__metric small {
+  color: var(--paper-3);
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  margin-top: 6px;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.online-history__clear,
+.history-card__continue {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-2);
+  display: inline-flex;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 700;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.online-history__clear:hover,
+.history-card__continue:hover {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.online-history__list {
+  display: grid;
+  gap: 12px;
+}
+
+.history-card {
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 82px minmax(0, 1fr);
+  min-height: 126px;
+  padding: 12px;
+}
+
+.history-card__cover {
+  background: var(--ink-2);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: inherit;
+  overflow: hidden;
+  padding: 0;
+}
+
+.history-card__cover img,
+.history-card__cover-placeholder {
+  aspect-ratio: 2 / 3;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.history-card__cover-placeholder {
+  align-items: center;
+  color: var(--paper-3);
+  display: flex;
+  justify-content: center;
+}
+
+.history-card__body {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+}
+
+.history-card__main {
+  min-width: 0;
+}
+
+.history-card__title {
+  background: transparent;
+  border: 0;
+  color: var(--paper-0);
+  display: block;
+  font-family: var(--f-display);
+  font-size: clamp(22px, 2.5vw, 32px);
+  line-height: 1;
+  margin: 4px 0 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-card__title:hover {
+  color: var(--shu);
+}
+
+.history-card__chapter {
+  color: var(--paper-2);
+  font-size: 13px;
+  margin: 8px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-card__side {
+  min-width: 78px;
+  text-align: right;
+}
+
+.history-card__side span {
+  color: var(--paper-0);
+  display: block;
+  font-family: var(--f-display);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.history-card__side small {
+  color: var(--paper-3);
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  margin-top: 7px;
+  text-transform: uppercase;
+}
+
+.history-card__progress {
+  background: var(--ink-4);
+  grid-column: 1 / -1;
+  height: 2px;
+  overflow: hidden;
+}
+
+.history-card__progress span {
+  background: var(--shu);
+  display: block;
+  height: 100%;
+}
+
+.history-card__footer {
+  align-items: center;
+  color: var(--paper-3);
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.online-history__empty {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  color: var(--paper-2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  min-height: 320px;
+  padding: 34px 20px;
+  text-align: center;
+}
+
+.online-history__empty .material-symbols-outlined {
+  color: var(--shu);
+  font-size: 46px !important;
+}
+
+.online-history__empty h3 {
+  color: var(--paper-0);
+  font-size: 18px;
+  margin: 0;
+}
+
+.online-history__empty p {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .online-history__summary {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px 16px;
+  }
+
+  .online-history__actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .history-card {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .history-card__body {
+    grid-template-columns: 1fr;
+  }
+
+  .history-card__side {
+    text-align: left;
+  }
+
+  .history-card__footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}

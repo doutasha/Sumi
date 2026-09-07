@@ -1,0 +1,168 @@
+/* ============================================================
+   CORE
+   Base tokens, reset, app wrapper, global scrollbar and loaders.
+   ============================================================ */
+
+/* ============================================================
+   SUMI - UI BASE
+   ============================================================ */
+
+@font-face {
+  font-display: swap;
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 200 400;
+  src: url('../assets/fonts/material-symbols-outlined.woff2') format('woff2');
+}
+
+/* ---------- Tokens ---------- */
+:root {
+  --ink-0:        #000000;
+  --ink-1:        #0a0a0a;
+  --ink-2:        #141414;
+  --ink-3:        #1c1c1c;
+  --ink-4:        #2a2a2a;
+  --ink-5:        #3a3a3a;
+  --paper-0:      #f6f3ec;
+  --paper-1:      #e8e4dc;
+  --paper-2:      rgba(246,243,236,0.72);
+  --paper-3:      rgba(246,243,236,0.46);
+  --paper-4:      rgba(246,243,236,0.28);
+  --shu:          #d93a2b;
+  --shu-dim:      #8a1f17;
+
+  --bg:           var(--ink-0);
+  --bg-card:      var(--ink-1);
+  --bg-overlay:   var(--ink-2);
+  --bg-modal:     var(--ink-1);
+  --accent:       var(--shu);
+  --accent-dim:   var(--shu-dim);
+  --accent-glow:  rgba(217, 58, 43, 0.18);
+  --text:         var(--paper-0);
+  --text-muted:   var(--paper-2);
+  --text-dim:     var(--paper-4);
+  --border:       var(--ink-4);
+  --danger:       #ff5a4e;
+  --green:        #8bd17c;
+  --badge-bg:     rgba(217, 58, 43, 0.90);
+  --badge-unread: rgba(139, 209, 124, 0.90);
+  --badge-text:   var(--paper-0);
+  --radius-sm:    2px;
+  --radius-md:    4px;
+  --radius-lg:    6px;
+  --radius-xl:    8px;
+  --shadow-md:    0 4px 24px rgba(0,0,0,0.45);
+  --shadow-lg:    0 8px 40px rgba(0,0,0,0.72);
+  --transition:   0.16s ease;
+  --cover-w:      148px;
+  --cover-h:      220px;
+  --font:         'Inter', system-ui, sans-serif;
+  --f-jp-serif:   'Shippori Mincho', 'Noto Serif JP', serif;
+  --f-jp-sans:    'Noto Sans JP', 'Inter', sans-serif;
+  --f-display:    'Shippori Mincho', 'Noto Serif JP', serif;
+  --f-ui:         'Inter', system-ui, sans-serif;
+  --f-mono:       'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { color-scheme: dark; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-weight: 400;
+  line-height: 1.5;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--shu);
+  color: var(--paper-0);
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button { cursor: pointer; font-family: inherit; }
+
+img { display: block; }
+
+[hidden] { display: none !important; }
+
+/* Material symbols sizing */
+.material-symbols-outlined {
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  direction: ltr;
+  display: inline-block;
+  font-family: 'Material Symbols Outlined';
+  font-feature-settings: 'liga';
+  font-size: 18px;
+  font-style: normal;
+  font-weight: normal;
+  font-variation-settings: 'wght' 400;
+  letter-spacing: normal;
+  line-height: 1;
+  text-transform: none;
+  vertical-align: middle;
+  white-space: nowrap;
+  word-wrap: normal;
+}
+
+
+/* ---------- App Wrapper ---------- */
+.app {
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-overlay); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ---------- Shared Layout ---------- */
+.online-reader {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.online-main {
+  flex: 1;
+  margin: 0 auto;
+  max-width: 1600px;
+  padding: 2rem;
+  width: 100%;
+}
+
+/* ---------- Spinner ---------- */
+.spinner {
+  animation: spin 0.7s linear infinite;
+  border: 3px solid var(--border);
+  border-radius: 50%;
+  border-top-color: var(--accent);
+  flex-shrink: 0;
+  height: 36px;
+  width: 36px;
+}
+
+.spinner--sm,
+.spinner--small {
+  border-width: 2px;
+  height: 18px;
+  width: 18px;
+}
+
+.spinner--lg {
+  border-width: 4px;
+  height: 54px;
+  width: 54px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

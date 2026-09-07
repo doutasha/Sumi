@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissoes da janela principal do Sumi: IPC basico + HTTP nativo (sem CORS) + abrir links + dialogos.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "http:default",
+    "opener:default",
+    "dialog:default"
+  ]
+}

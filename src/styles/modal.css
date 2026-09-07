@@ -1,0 +1,171 @@
+/* ============================================================
+   MODAL
+   Shared modal shell used by library, extensions and manga detail.
+   ============================================================ */
+
+/* ============================================================
+   MODAL OVERLAY (shared)
+   ============================================================ */
+.modal-overlay {
+  align-items: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  height: 100dvh;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100vw;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-close {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 50%;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  width: 32px;
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+.modal-close:hover { background: rgba(255,255,255,0.14); color: var(--text); }
+.modal-close .material-symbols-outlined { font-size: 20px !important; margin: 0; }
+
+
+/* ============================================================
+   GENERIC MODAL
+   ============================================================ */
+.modal {
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2rem);
+  max-width: 480px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.modal--medium {
+  max-width: 540px;
+}
+
+.modal--small {
+  max-width: 420px;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.modal__header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal__close {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 50%;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  width: 32px;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+}
+.modal__close:hover { background: rgba(255,255,255,0.14); color: var(--text); }
+.modal__close .material-symbols-outlined { font-size: 20px !important; }
+
+.modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modal__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.modal__input,
+.modal__select {
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  outline: none;
+  padding: 0.65rem 0.9rem;
+  transition: border-color var(--transition);
+  width: 100%;
+}
+.modal__input:focus,
+.modal__select:focus { border-color: var(--accent); }
+
+.modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.modal__btn {
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.65rem 1.25rem;
+  transition: background var(--transition), opacity var(--transition);
+}
+.modal__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.modal__btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+.modal__btn--primary:hover:not(:disabled) { background: var(--accent-dim); }
+
+.modal__btn--secondary {
+  background: var(--bg-overlay);
+  color: var(--text-muted);
+}
+.modal__btn--secondary:hover { color: var(--text); }
+
+.modal__btn--danger {
+  align-items: center;
+  background: var(--danger);
+  color: #fff;
+  display: inline-flex;
+  gap: 0.4rem;
+}
+.modal__btn--danger:hover { background: #dc2626; }
+.modal__btn--danger .material-symbols-outlined { font-size: 18px !important; }

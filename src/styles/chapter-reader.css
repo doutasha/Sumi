@@ -1,0 +1,473 @@
+/* ============================================================
+   CHAPTER READER
+   Fullscreen vertical and paged reading modes.
+   ============================================================ */
+
+/* ============================================================
+   SUMI - CHAPTER READER
+   ============================================================ */
+.chapter-reader {
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  overflow-y: auto;
+  position: fixed;
+  z-index: 9000;
+}
+
+.reader-topbar,
+.reader-bottombar {
+  align-items: center;
+  display: flex;
+  left: 0;
+  position: fixed;
+  right: 0;
+  z-index: 9001;
+}
+
+.reader-topbar {
+  top: 0;
+}
+
+.reader-bottombar {
+  bottom: 0;
+}
+
+.chapter-reader.ui-hidden .reader-topbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-100%);
+}
+
+.chapter-reader.ui-hidden .reader-bottombar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(100%);
+}
+
+.chapter-reader--sumi {
+  background: var(--ink-0);
+  color: var(--paper-0);
+  cursor: default;
+  min-height: 100dvh;
+}
+
+.chapter-reader--sumi .reader-safe-back {
+  align-items: center;
+  background: var(--shu);
+  border: 1px solid var(--shu);
+  border-radius: 0;
+  color: var(--paper-0);
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  left: 14px;
+  padding: 0;
+  position: fixed;
+  top: 14px;
+  width: 44px;
+  z-index: 9020;
+}
+
+.chapter-reader--sumi .reader-safe-back:hover {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.chapter-reader--sumi .reader-topbar,
+.chapter-reader--sumi .reader-bottombar {
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(10px);
+  border-color: var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-0);
+  gap: 14px;
+  min-height: 72px;
+  padding: 12px 18px 12px 72px;
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.chapter-reader--sumi .reader-topbar {
+  border-bottom: 1px solid var(--ink-4);
+}
+
+.chapter-reader--sumi .reader-bottombar {
+  border-top: 1px solid var(--ink-4);
+  justify-content: center;
+  min-height: 58px;
+  padding: 10px 18px;
+}
+
+.chapter-reader--sumi .reader-topbar__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.chapter-reader--sumi .reader-topbar__meta {
+  color: var(--shu);
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.chapter-reader--sumi .reader-topbar__manga {
+  color: var(--paper-0);
+  font-family: var(--f-display);
+  font-size: clamp(20px, 2.5vw, 30px);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-reader--sumi .reader-topbar__chapter {
+  color: var(--paper-3);
+  font-family: var(--f-ui);
+  font-size: 12px;
+  margin: 5px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-reader--sumi .reader-topbar__progress {
+  min-width: 86px;
+  text-align: right;
+}
+
+.chapter-reader--sumi .reader-topbar__progress span {
+  color: var(--paper-0);
+  display: block;
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chapter-reader--sumi .reader-topbar__progress small {
+  color: var(--paper-3);
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  margin-top: 5px;
+  text-transform: uppercase;
+}
+
+.chapter-reader--sumi .reader-topbar__controls {
+  display: flex;
+  gap: 6px;
+}
+
+.chapter-reader--sumi .reader-btn,
+.chapter-reader--sumi .reader-mode-btn,
+.chapter-reader--sumi .reader-page-btn,
+.chapter-reader--sumi .reader-nav-btn,
+.chapter-reader--sumi .sb-retry {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-2);
+  display: inline-flex;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 700;
+  gap: 7px;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.chapter-reader--sumi .reader-btn,
+.chapter-reader--sumi .reader-mode-btn {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0;
+  width: 36px;
+}
+
+.chapter-reader--sumi .reader-btn:hover,
+.chapter-reader--sumi .reader-mode-btn:hover,
+.chapter-reader--sumi .reader-page-btn:hover:not(:disabled),
+.chapter-reader--sumi .reader-nav-btn:hover,
+.chapter-reader--sumi .sb-retry:hover {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.chapter-reader--sumi .reader-mode-btn.active,
+.chapter-reader--sumi .reader-nav-btn {
+  background: var(--shu);
+  border-color: var(--shu);
+  color: var(--paper-0);
+}
+
+.chapter-reader--sumi .reader-nav-btn--secondary {
+  background: var(--ink-1);
+  border-color: var(--ink-4);
+  color: var(--paper-2);
+}
+
+.chapter-reader--sumi .reader-btn:disabled,
+.chapter-reader--sumi .reader-nav-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.chapter-reader--sumi .reader-nav-btn:disabled,
+.chapter-reader--sumi .reader-nav-btn--secondary:disabled {
+  background: var(--ink-1);
+  border-color: var(--ink-4);
+  color: var(--paper-3);
+}
+
+.chapter-reader--sumi .reader-chapter-label {
+  border: 1px solid var(--ink-4);
+  color: var(--paper-2);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  padding: 7px 10px;
+  text-transform: uppercase;
+}
+
+.chapter-reader--sumi .reader-loading,
+.chapter-reader--sumi .reader-error {
+  align-items: center;
+  color: var(--paper-2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 96px 20px;
+  text-align: center;
+}
+
+.chapter-reader--sumi .reader-loading .spinner {
+  border-color: var(--ink-4);
+  border-top-color: var(--shu);
+}
+
+.chapter-reader--sumi .reader-loading--overlay {
+  background: var(--ink-0);
+  inset: 0;
+  min-height: 100dvh;
+  position: fixed;
+  z-index: 9015;
+}
+
+.chapter-reader--sumi .reader-error .material-symbols-outlined {
+  color: var(--shu);
+  font-size: 48px !important;
+  opacity: 1;
+}
+
+.chapter-reader--sumi .reader-error__message {
+  line-height: 1.6;
+  margin: 0;
+  max-width: 560px;
+  white-space: pre-line;
+}
+
+.chapter-reader--sumi .reader-error__actions,
+.chapter-reader--sumi .reader-end-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.chapter-reader--sumi .reader-vertical {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: 72px 0 64px;
+}
+
+.chapter-reader--sumi .reader-page {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  max-width: min(100%, 980px);
+  position: relative;
+  width: 100%;
+}
+
+.chapter-reader--sumi .reader-page img {
+  background: #fff;
+  display: block;
+  height: auto;
+  max-width: 100%;
+  width: 100%;
+}
+
+.chapter-reader--sumi .reader-page__skeleton {
+  animation: skeleton-shimmer 1.4s infinite;
+  aspect-ratio: 2 / 3;
+  background:
+    linear-gradient(90deg, transparent 25%, rgba(246,243,236,0.07) 50%, transparent 75%),
+    var(--ink-2);
+  background-size: 200% 100%;
+  width: 100%;
+}
+
+.chapter-reader--sumi .reader-page__error {
+  align-items: center;
+  border: 1px solid var(--ink-4);
+  color: var(--paper-3);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  gap: 10px;
+  margin: 12px 0;
+  min-height: 220px;
+  padding: 36px 18px;
+  width: 100%;
+}
+
+.chapter-reader--sumi .reader-page__error .material-symbols-outlined {
+  color: var(--shu);
+  font-size: 40px !important;
+}
+
+.chapter-reader--sumi .reader-chapter-end {
+  align-items: center;
+  border-top: 1px solid var(--ink-4);
+  color: var(--paper-3);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 24px;
+  padding: 28px 20px 56px;
+  width: min(100%, 980px);
+}
+
+.chapter-reader--sumi .reader-chapter-end p {
+  color: var(--paper-3);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.chapter-reader--sumi .reader-paged {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 84px 16px 112px;
+}
+
+.chapter-reader--sumi .reader-paged .reader-page {
+  flex: 1;
+  max-height: calc(100dvh - 208px);
+  max-width: min(100%, 980px);
+}
+
+.chapter-reader--sumi .reader-paged .reader-page img {
+  height: 100%;
+  max-height: calc(100dvh - 208px);
+  object-fit: contain;
+  width: auto;
+}
+
+.chapter-reader--sumi .reader-paged__nav {
+  align-items: center;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--ink-4);
+  bottom: 0;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  left: 0;
+  padding: 14px 16px;
+  position: fixed;
+  right: 0;
+}
+
+.chapter-reader--sumi .reader-page-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.chapter-reader--sumi .reader-page-indicator {
+  border: 1px solid var(--ink-4);
+  color: var(--paper-2);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  min-width: 84px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .chapter-reader--sumi .reader-safe-back {
+    height: 40px;
+    left: 10px;
+    top: 10px;
+    width: 40px;
+  }
+
+  .chapter-reader--sumi .reader-topbar {
+    min-height: 64px;
+    padding: 10px 12px 10px 60px;
+  }
+
+  .chapter-reader--sumi .reader-topbar__progress {
+    display: none;
+  }
+
+  .chapter-reader--sumi .reader-topbar__manga {
+    font-size: 22px;
+  }
+
+  .chapter-reader--sumi .reader-topbar__chapter {
+    font-size: 11px;
+  }
+
+  .chapter-reader--sumi .reader-mode-btn {
+    height: 34px;
+    width: 34px;
+  }
+
+  .chapter-reader--sumi .reader-vertical {
+    padding-top: 64px;
+  }
+
+  .chapter-reader--sumi .reader-paged {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .chapter-reader--sumi .reader-paged__nav {
+    gap: 8px;
+  }
+
+  .chapter-reader--sumi .reader-page-btn {
+    font-size: 12px;
+    padding: 0 9px;
+  }
+
+  .chapter-reader--sumi .reader-page-indicator {
+    min-width: 68px;
+  }
+}

@@ -1,0 +1,762 @@
+/* ============================================================
+   MANGA DETAIL
+   Manga metadata, chapter list and read-state actions.
+   ============================================================ */
+
+/* ============================================================
+   SUMI - DETALHE
+   ============================================================ */
+.online-main--detail {
+  padding: 0;
+}
+
+.manga-detail {
+  margin: 0;
+  max-width: none;
+  padding: 0 0 72px;
+  width: 100%;
+}
+
+.manga-detail__hero {
+  border-bottom: 1px solid var(--ink-4);
+  padding: 34px clamp(20px, 4vw, 54px) 30px;
+}
+
+.manga-detail__crumbs {
+  align-items: center;
+  color: var(--paper-3);
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  gap: 10px;
+  letter-spacing: 0.12em;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.manga-detail__crumbs strong {
+  color: var(--paper-1);
+  font-weight: 600;
+}
+
+.manga-detail__back {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--ink-4);
+  color: var(--paper-2);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  width: 34px;
+}
+
+.manga-detail__back:hover {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.manga-detail__hero-grid {
+  align-items: start;
+  display: grid;
+  gap: clamp(28px, 4vw, 48px);
+  grid-template-columns: minmax(188px, 240px) minmax(0, 760px);
+}
+
+.manga-detail__cover-wrap {
+  width: 100%;
+}
+
+.manga-detail__cover,
+.manga-detail__cover-placeholder {
+  aspect-ratio: 2 / 3;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  box-shadow: none;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.manga-detail__cover-placeholder {
+  align-items: center;
+  color: var(--paper-4);
+  display: flex;
+  justify-content: center;
+}
+
+.manga-detail__cover-placeholder .material-symbols-outlined {
+  font-size: 54px !important;
+}
+
+.manga-detail__meta {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.manga-detail__eyebrow {
+  color: var(--shu);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.manga-detail__title {
+  color: var(--paper-0);
+  font-family: var(--f-display);
+  font-size: clamp(42px, 6vw, 76px);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 0.96;
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+
+.manga-detail__author {
+  color: var(--paper-2);
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+
+.manga-detail__author strong {
+  color: var(--paper-0);
+  font-weight: 600;
+}
+
+.manga-detail__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0 0 22px;
+}
+
+.detail-pill {
+  background: transparent;
+  border: 1px solid var(--ink-5);
+  border-radius: 0;
+  color: var(--paper-2);
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 4px 7px;
+  text-transform: uppercase;
+}
+
+.detail-pill--ongoing {
+  border-color: rgba(139,209,124,0.44);
+  color: var(--green);
+}
+
+.detail-pill--completed {
+  border-color: rgba(118,169,250,0.44);
+  color: #76a9fa;
+}
+
+.detail-pill--hiatus,
+.detail-pill--cancelled,
+.detail-pill--rating {
+  border-color: rgba(255,90,78,0.48);
+  color: var(--danger);
+}
+
+.manga-detail__desc {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  color: var(--paper-1);
+  display: -webkit-box;
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 740px;
+  overflow: hidden;
+}
+
+.manga-detail__desc--empty {
+  color: var(--paper-3);
+}
+
+.manga-detail__notice {
+  align-items: flex-start;
+  background: rgba(255,90,78,0.08);
+  border: 1px solid rgba(255,90,78,0.32);
+  color: var(--paper-2);
+  display: flex;
+  font-size: 13px;
+  gap: 10px;
+  margin-top: 18px;
+  max-width: 740px;
+  padding: 12px 14px;
+}
+
+.manga-detail__notice .material-symbols-outlined {
+  color: var(--danger);
+}
+
+.manga-detail__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin: 28px 0 24px;
+}
+
+.manga-detail__stats div {
+  min-width: 90px;
+}
+
+.manga-detail__stats span {
+  color: var(--paper-0);
+  display: block;
+  font-family: var(--f-display);
+  font-size: 30px;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.manga-detail__stats small {
+  color: var(--paper-3);
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  margin-top: 7px;
+  text-transform: uppercase;
+}
+
+.manga-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detail-action-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--ink-5);
+  border-radius: 0;
+  color: var(--paper-1);
+  display: inline-flex;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 15px;
+  text-decoration: none;
+}
+
+.detail-action-btn:hover {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+  text-decoration: none;
+}
+
+.detail-action-btn--primary {
+  background: var(--shu);
+  border-color: var(--shu);
+  color: var(--paper-0);
+}
+
+.detail-action-btn--primary:hover {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.detail-action-btn--secondary {
+  color: var(--paper-2);
+}
+
+.detail-action-btn.favorited {
+  border-color: var(--shu);
+  color: var(--shu);
+}
+
+.detail-action-btn.favorited:hover {
+  background: rgba(255,90,78,0.12);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.manga-detail__chapters {
+  padding: 26px clamp(20px, 4vw, 54px) 0;
+}
+
+.manga-detail__chapters-header {
+  align-items: flex-end;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 0 0 14px;
+}
+
+.manga-detail__section-title {
+  align-items: center;
+  color: var(--paper-0);
+  display: flex;
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 500;
+  gap: 10px;
+  line-height: 1.1;
+  margin: 4px 0 0;
+}
+
+.chapter-count {
+  background: transparent;
+  border: 1px solid var(--shu);
+  border-radius: 0;
+  color: var(--shu);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+}
+
+.manga-detail__chapters-controls {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.chapter-lang-select,
+.sort-btn {
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-1);
+  min-height: 36px;
+}
+
+.chapter-lang-select {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 0 10px;
+  text-transform: uppercase;
+}
+
+.sort-btn {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0;
+  width: 36px;
+}
+
+.chapter-lang-select:focus,
+.sort-btn:hover {
+  border-color: var(--shu);
+  color: var(--paper-0);
+  outline: none;
+}
+
+.chapters-loading,
+.chapters-empty,
+.chapters-error {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  color: var(--paper-2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 220px;
+  padding: 32px 18px;
+  text-align: center;
+}
+
+.chapters-empty .material-symbols-outlined,
+.chapters-error .material-symbols-outlined {
+  color: var(--shu);
+  font-size: 42px !important;
+}
+
+.chapter-list {
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.chapter-row {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ink-4);
+  color: var(--paper-2);
+  display: grid;
+  font-family: var(--f-ui);
+  gap: 16px;
+  grid-template-columns: 42px minmax(0, 1fr) minmax(110px, 170px) 72px 104px 22px;
+  min-height: 48px;
+  padding: 0 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.chapter-row:last-child {
+  border-bottom: 0;
+}
+
+.chapter-row:not(.chapter-row--head):hover {
+  background: var(--ink-1);
+  color: var(--paper-0);
+}
+
+.chapter-row--head {
+  color: var(--paper-3);
+  font-family: var(--f-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  min-height: 32px;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.chapter-row__num,
+.chapter-row__title,
+.chapter-row__group,
+.chapter-row__pages,
+.chapter-row__date {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-row__num {
+  color: var(--paper-3);
+  font-family: var(--f-mono);
+  font-size: 10px;
+}
+
+.chapter-row__title {
+  color: var(--paper-0);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chapter-row__group,
+.chapter-row__pages,
+.chapter-row__date {
+  color: var(--paper-3);
+  font-family: var(--f-mono);
+  font-size: 10px;
+}
+
+.chapter-row__arrow {
+  color: var(--paper-4);
+  font-size: 20px !important;
+}
+
+.chapter-row--read {
+  opacity: 0.58;
+}
+
+.chapter-row--current {
+  background: rgba(217,58,43,0.08);
+}
+
+.chapter-row__title {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.chapter-row__badge {
+  border: 1px solid var(--ink-4);
+  color: var(--paper-3);
+  flex: 0 0 auto;
+  font-family: var(--f-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  padding: 2px 5px;
+  text-transform: uppercase;
+}
+
+.chapter-row--current .chapter-row__badge {
+  border-color: rgba(217,58,43,0.5);
+  color: var(--shu);
+}
+
+.chapter-row--read .chapter-row__badge {
+  color: var(--green);
+}
+
+.chapter-bulk-toolbar {
+  align-items: center;
+  border: 1px solid var(--ink-4);
+  border-bottom: 0;
+  color: var(--paper-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 10px 12px;
+}
+
+.chapter-bulk-toolbar__count {
+  color: var(--paper-3);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  margin-right: auto;
+  text-transform: uppercase;
+}
+
+.chapter-selection-toggle,
+.chapter-bulk-btn {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-2);
+  display: inline-flex;
+  font-family: var(--f-ui);
+  font-size: 12px;
+  font-weight: 700;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.chapter-selection-toggle:hover,
+.chapter-selection-toggle.active,
+.chapter-bulk-btn:hover:not(:disabled) {
+  background: var(--paper-0);
+  border-color: var(--paper-0);
+  color: var(--ink-0);
+}
+
+.chapter-bulk-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.chapter-selection-toggle .material-symbols-outlined,
+.chapter-bulk-btn .material-symbols-outlined {
+  font-size: 17px !important;
+}
+
+.chapter-row {
+  cursor: pointer;
+  grid-template-columns: 34px 42px minmax(0, 1fr) minmax(110px, 170px) 72px 104px 22px 38px;
+}
+
+.chapter-row--head {
+  cursor: default;
+}
+
+.chapter-row--selection {
+  cursor: cell;
+}
+
+.chapter-row--selected {
+  background: rgba(217,58,43,0.12);
+}
+
+.chapter-row__select-marker {
+  align-items: center;
+  border: 1px solid transparent;
+  color: transparent;
+  display: inline-flex;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.chapter-row--selection .chapter-row__select-marker {
+  border-color: var(--ink-4);
+  color: var(--paper-4);
+}
+
+.chapter-row--selection:hover .chapter-row__select-marker {
+  border-color: var(--ink-5);
+  color: var(--paper-2);
+}
+
+.chapter-row--selected .chapter-row__select-marker {
+  background: var(--shu);
+  border-color: var(--shu);
+  color: var(--paper-0);
+}
+
+.chapter-row__select-marker .material-symbols-outlined {
+  font-size: 16px !important;
+}
+
+.chapter-row__read-toggle {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-3);
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+}
+
+.chapter-row__read-toggle:hover,
+.chapter-row__read-toggle.active {
+  border-color: var(--shu);
+  color: var(--shu);
+}
+
+.chapter-row__read-toggle.active:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.chapter-row__read-toggle .material-symbols-outlined {
+  font-size: 17px !important;
+}
+
+.cat-checkbox-list {
+  display: grid;
+  gap: 4px;
+}
+
+.cat-checkbox {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  color: var(--paper-1);
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.cat-checkbox:hover {
+  border-color: var(--ink-5);
+}
+
+.cat-checkbox input {
+  accent-color: var(--shu);
+  margin: 0;
+}
+
+.modal__hint {
+  color: var(--paper-2);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 920px) {
+  .manga-detail__hero-grid {
+    grid-template-columns: 156px minmax(0, 1fr);
+  }
+
+  .chapter-row {
+    grid-template-columns: 32px 38px minmax(0, 1fr) 74px 22px 34px;
+  }
+
+  .chapter-row--head span:nth-child(3) {
+    display: inline;
+  }
+
+  .chapter-row--head span:nth-child(4),
+  .chapter-row--head span:nth-child(6),
+  .chapter-row__group,
+  .chapter-row__date {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .manga-detail__hero {
+    padding: 20px 16px 24px;
+  }
+
+  .manga-detail__crumbs {
+    gap: 7px;
+  }
+
+  .manga-detail__hero-grid {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .manga-detail__title {
+    font-size: clamp(30px, 11vw, 44px);
+  }
+
+  .manga-detail__author,
+  .manga-detail__desc {
+    font-size: 13px;
+  }
+
+  .manga-detail__pills {
+    gap: 5px;
+  }
+
+  .detail-pill {
+    font-size: 8px;
+    padding: 3px 5px;
+  }
+
+  .manga-detail__stats {
+    gap: 18px;
+    margin: 20px 0;
+  }
+
+  .manga-detail__stats span {
+    font-size: 22px;
+  }
+
+  .manga-detail__chapters {
+    padding: 22px 16px 0;
+  }
+
+  .manga-detail__chapters-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manga-detail__chapters-controls {
+    width: 100%;
+  }
+
+  .chapter-lang-select {
+    flex: 1;
+  }
+
+  .chapter-bulk-toolbar {
+    align-items: stretch;
+  }
+
+  .chapter-bulk-toolbar__count {
+    flex-basis: 100%;
+    margin-right: 0;
+  }
+
+  .chapter-bulk-btn {
+    flex: 1 1 150px;
+  }
+
+  .chapter-row {
+    gap: 10px;
+    grid-template-columns: 28px 34px minmax(0, 1fr) 22px 32px;
+    padding: 0 10px;
+  }
+
+  .chapter-row--head span:nth-child(5),
+  .chapter-row__pages {
+    display: none;
+  }
+
+  .chapter-row__badge {
+    display: none;
+  }
+}

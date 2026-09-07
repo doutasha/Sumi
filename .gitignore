@@ -1,0 +1,15 @@
+Dependencies
+node_modules/
+package-lock.json
+
+Build
+dist/
+*.local
+
+# Tauri desktop (build outputs do Rust/bundler — nunca commitar)
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+*.log
+
+# Pacotes Windows prontos p/ distribuir (gerados via npm run package:windows)
+build/
