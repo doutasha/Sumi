@@ -4,6 +4,7 @@ import { clearServerSourceCache } from '../lib/sourceRegistry.js';
 import { checkHealth, getSuwayomiConfig } from '../lib/parser/connection.js';
 import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js';
 import { watchServer } from '../../desktop/frontend-integration/sidecar.js';
+import { checkForUpdates } from '../../desktop/frontend-integration/updater.js';
 import OnlineLibrary from './OnlineLibrary.jsx';
 import SourceBrowser from './SourceBrowser.jsx';
 import MangaDetailPage from './MangaDetailPage.jsx';
@@ -77,6 +78,7 @@ export default function OnlineReader() {
   const [activeView, setActiveView] = useState('library');
   const [activeCategory, setActiveCategory] = useState(null);
   const [navStack, setNavStack] = useState([]);
+  const [pendingUpdate, setPendingUpdate] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -86,6 +88,18 @@ export default function OnlineReader() {
     if (!isTauriRuntime()) return undefined;
     const stop = watchServer({ checkHealth, getConfig: getSuwayomiConfig });
     return stop;
+  }, []);
+
+  // Checagem de update ao abrir (desktop, 1x, silenciosa): só mostra o aviso.
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    let alive = true;
+    const timer = setTimeout(() => {
+      checkForUpdates()
+        .then((info) => { if (alive && info) setPendingUpdate(info); })
+        .catch(() => {});
+    }, 15000);
+    return () => { alive = false; clearTimeout(timer); };
   }, []);
 
   const loadData = () => {
@@ -231,6 +245,21 @@ export default function OnlineReader() {
             </div>
           </div>
         </header>
+
+        {pendingUpdate && (
+          <div className="ext-manager__count">
+            <span>Nova versão v{pendingUpdate.version} disponível.</span>
+            <span>
+              <button
+                className="ext-manager__refresh"
+                onClick={() => { setActiveView('settings'); setPendingUpdate(null); }}
+                title="Ver atualização no Config"
+              >
+                <span className="material-symbols-outlined">system_update</span>
+              </button>
+            </span>
+          </div>
+        )}
 
         <main className="online-main sumi-main">
           {activeView === 'library' && (

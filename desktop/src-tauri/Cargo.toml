@@ -1,6 +1,6 @@
 [package]
 name = "sumi"
-version = "1.0.1"
+version = "1.1.0"
 description = "Sumi — leitor local de mangas (desktop)"
 authors = ["Sumi"]
 edition = "2021"
@@ -21,6 +21,7 @@ reqwest = { version = "0.13.3", features = ["blocking", "stream"] }
 futures-util = "0.3.34"
 zip = "4.2.0"
 sha2 = "0.10.9"
+tauri-plugin-updater = "2.11.0"
 
 [features]
 # by default Tauri runs in production mode

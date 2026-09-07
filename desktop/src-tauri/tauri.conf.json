@@ -30,6 +30,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -40,5 +41,14 @@
     "category": "Utility",
     "shortDescription": "Sumi — leitor local de mangas",
     "longDescription": "Sumi e um leitor local de mangas: MangaDex como fonte nativa, extensoes compativeis com Keiyoushi, biblioteca, historico e backup — agora tambem como app desktop."
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/doutasha/Sumi/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDIxNzA0MUVEMDUxQ0U1MUIKUldRYjVSd0Y3VUZ3SVh3TjdqbFVIQ0d3azNqV1RmUVJEajhIRXJHZFVXZjNMRDE1cGF3cXVXdkUK"
+    }
   }
 }

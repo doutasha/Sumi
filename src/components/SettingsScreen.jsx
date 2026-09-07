@@ -6,6 +6,7 @@ import { refreshServerSources } from '../lib/parser/sources.js';
 import { clearServerSourceCache } from '../lib/sourceRegistry.js';
 import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js';
 import { sidecarStatus, sidecarStart, sidecarStop, sidecarDownload, sidecarSetKcef } from '../../desktop/frontend-integration/sidecar.js';
+import { checkForUpdates, installUpdate, currentVersion } from '../../desktop/frontend-integration/updater.js';
 
 /**
  * SettingsScreen — Configurações > Motor + Biblioteca > Repositórios.
@@ -50,6 +51,10 @@ export default function SettingsScreen() {
   const [dlProgress, setDlProgress] = useState(null);
   const [openSection, setOpenSection] = useState('motor');
   const toggleSection = (id) => setOpenSection((cur) => (cur === id ? null : id));
+  const [appVersion, setAppVersion] = useState(null);
+  const [updateInfo, setUpdateInfo] = useState(null);
+  const [updateBusy, setUpdateBusy] = useState(false);
+  const [upProgress, setUpProgress] = useState(null);
 
   const loadRepos = async (cfg = config) => {
     setReposLoading(true);
@@ -67,6 +72,7 @@ export default function SettingsScreen() {
     loadRepos();
     if (isTauriRuntime()) {
       sidecarStatus().then(setSidecar).catch(() => setSidecar(null));
+      currentVersion().then(setAppVersion).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -163,6 +169,46 @@ export default function SettingsScreen() {
     } finally {
       setSidecarBusy(false);
     }
+  };
+
+  const handleCheckUpdates = async () => {
+    setUpdateBusy(true);
+    try {
+      const info = await checkForUpdates();
+      setUpdateInfo(info);
+      flash(info ? `Nova versão disponível: v${info.version}.` : 'Sumi já está atualizado.');
+    } catch (err) {
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setUpdateBusy(false);
+    }
+  };
+
+  const handleInstallUpdate = async () => {
+    setUpdateBusy(true);
+    setUpProgress({ phase: 'download', received: 0, total: 0 });
+    try {
+      const res = await installUpdate({ onProgress: (ev) => setUpProgress(ev) });
+      setUpProgress(null);
+      if (!res?.updated) {
+        flash('Sumi já está atualizado.');
+        setUpdateInfo(null);
+      }
+      // Se atualizou, o instalador reinicia o app sozinho (Windows).
+    } catch (err) {
+      setUpProgress(null);
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setUpdateBusy(false);
+    }
+  };
+
+  const upLabel = () => {
+    if (!upProgress) return null;
+    if (upProgress.phase === 'install') return 'Instalando… o app vai reiniciar.';
+    const { received = 0, total = 0 } = upProgress;
+    if (!total) return `Baixando… (${(received / 1048576).toFixed(0)}MB)`;
+    return `Baixando… ${Math.round((received / total) * 100)}% (${(received / 1048576).toFixed(0)}/${(total / 1048576).toFixed(0)}MB)`;
   };
 
   const dlLabel = () => {
@@ -412,6 +458,41 @@ export default function SettingsScreen() {
           </div>
         )}
       </Section>
+
+      {isDesktop && (
+        <Section
+          icon="system_update"
+          title="Atualizações"
+          hint={appVersion ? `v${appVersion}` : ''}
+          open={openSection === 'updates'}
+          onToggle={() => toggleSection('updates')}
+        >
+          <p className="ext-manager__subtitle">
+            {updateInfo
+              ? `Nova versão v${updateInfo.version} disponível${updateInfo.date ? ` (${updateInfo.date.slice(0, 10)})` : ''}.`
+              : 'Verifica releases novas no GitHub e instala por cima (sem duplicar).'}
+          </p>
+          {updateInfo?.body && (
+            <p className="ext-manager__subtitle">{updateInfo.body.slice(0, 600)}</p>
+          )}
+          {upProgress && (
+            <p className="ext-manager__subtitle">{upLabel()}</p>
+          )}
+          <div className="ext-manager__count">
+            <span>{updateInfo ? `Instalar v${updateInfo.version}` : 'Verificar agora'}</span>
+            <span>
+              <button
+                className="ext-manager__refresh"
+                onClick={updateInfo ? handleInstallUpdate : handleCheckUpdates}
+                disabled={updateBusy}
+                title={updateInfo ? 'Baixar e instalar' : 'Verificar atualizações'}
+              >
+                <span className="material-symbols-outlined">{updateInfo ? 'download' : 'refresh'}</span>
+              </button>
+            </span>
+          </div>
+        </Section>
+      )}
     </div>
   );
 }
