@@ -1,16 +1,16 @@
 //! Gerente do motor Suwayomi-Server como processo filho (sidecar) — fase 4d-2.
 //!
 //! Decisões (conforme escolha do usuário):
-//! - JRE slim + JAR sob demanda: `server_start` procura o layout abaixo e,
-//!   se ausente, devolve erro `NEEDS_DOWNLOAD` (o download com progresso vem
-//!   no próximo passo; nada é baixado sem o usuário ver).
+//! - JRE slim + JAR sob demanda (`server_download`, com progresso e SHA-256;
+//!   nada é baixado sem o usuário ver).
 //! - Data-dir FIXO: `<LocalAppData>/Sumi/suwayomi` via
 //!   `app.path().app_local_data_dir()` (+ `Sumi/suwayomi`), repassado com
 //!   `-Dsuwayomi.tachidesk.config.server.rootDir=...` (padrão do wiki oficial).
 //! - Autostart oculto: `CREATE_NO_WINDOW` no Windows + stdio nulo +
 //!   `initialOpenInBrowserEnabled=false` + `systemTrayEnabled=false`.
 //! - Heap capado: `-Xmx512m`.
-//! - CEF lazy (260MB!): `kcefEnabled=false` até uma extensão exigir WebView.
+//! - CEF lazy: `kcefEnabled=false` por padrão (poupa ~260MB); opt-in via
+//!   `server_set_kcef` (marcador `<base>/kcef.enabled`, exige restart).
 //! - Health + relançamento: o Rust expõe `server_start` idempotente; o loop de
 //!   health fica no frontend (`sidecar.js`, reusa `checkHealth()` de parser/).
 //! - Kill-on-close: `shutdown_server` é chamado no `CloseRequested` da janela
@@ -51,6 +51,7 @@ struct Inner {
 pub struct StartedInfo {
     pub pid: u32,
     pub port: u16,
+    pub kcef: bool,
     pub data_dir: String,
     pub java_bin: String,
     pub jar: String,
@@ -118,6 +119,31 @@ fn port_busy(port: u16) -> bool {
     std::net::TcpListener::bind(("127.0.0.1", port)).is_err()
 }
 
+/// Marcador opt-in do KCEF: `<base>/kcef.enabled` existe = ligado.
+/// Arquivo (não registro) de propósito: sobrevive a reinstalações e vale
+/// por máquina; o frontend só lê/escreve via `server_set_kcef`.
+fn kcef_marker(base: &std::path::Path) -> PathBuf {
+    base.join("kcef.enabled")
+}
+
+fn read_kcef(base: &std::path::Path) -> bool {
+    kcef_marker(base).exists()
+}
+
+/// Liga/desliga o WebView KCEF (~260MB baixados pelo servidor no primeiro
+/// uso com Cloudflare). Exige restart do motor — o frontend reinicia.
+#[tauri::command]
+pub fn server_set_kcef(app: AppHandle, enabled: bool) -> Result<serde_json::Value, String> {
+    let base = sumi_data_dir(&app)?;
+    let marker = kcef_marker(&base);
+    if enabled {
+        std::fs::write(&marker, "1").map_err(|e| format!("gravar marcador: {e}"))?;
+    } else {
+        let _ = std::fs::remove_file(&marker);
+    }
+    Ok(serde_json::json!({ "kcef": enabled }))
+}
+
 /// Autostart oculto (chamado no setup do app, fase 4d-2 item 1).
 /// Regras: sem JRE/JAR → `skipped: needs-download` (nunca baixa sozinho os
 /// 220MB); porta ocupada → `skipped: port-busy` (servidor manual é o dono);
@@ -134,8 +160,8 @@ pub fn autostart(app: &AppHandle) -> serde_json::Value {
             return Ok(serde_json::json!({ "started": false, "reason": "port-busy", "port": port }));
         }
         let state: tauri::State<ServerState> = app.state();
-        let info = server_start_inner(app, &state, port, None, None)?;
-        Ok(serde_json::json!({ "started": true, "pid": info.pid, "port": info.port }))
+        let info = server_start_inner(app, &state, port, None, None, None)?;
+        Ok(serde_json::json!({ "started": true, "pid": info.pid, "port": info.port, "kcef": info.kcef }))
     })();
     match out {
         Ok(v) => v,
@@ -160,6 +186,7 @@ pub fn server_status(
     Ok(serde_json::json!({
         "running": running,
         "needsDownload": !jar_for(&data_dir).exists() || !java_bin_for(&data_dir).exists(),
+        "kcef": read_kcef(&data_dir),
         "info": inner.info,
         "dataDir": data_dir.to_string_lossy(),
         "port": inner.info.clone().map(|i| i.port).unwrap_or_else(default_port),
@@ -174,8 +201,16 @@ pub fn server_start(
     port: Option<u16>,
     java_path: Option<String>,
     jar_path: Option<String>,
+    kcef: Option<bool>,
 ) -> Result<StartedInfo, String> {
-    server_start_inner(&app, &state, port.unwrap_or_else(default_port), java_path, jar_path)
+    server_start_inner(
+        &app,
+        &state,
+        port.unwrap_or_else(default_port),
+        java_path,
+        jar_path,
+        kcef,
+    )
 }
 
 fn server_start_inner(
@@ -184,6 +219,7 @@ fn server_start_inner(
     port: u16,
     java_path: Option<String>,
     jar_path: Option<String>,
+    kcef: Option<bool>,
 ) -> Result<StartedInfo, String> {
     let data_dir = sumi_data_dir(app)?;
 
@@ -197,6 +233,14 @@ fn server_start_inner(
     inner.child = None;
     inner.info = None;
 
+    // Porta ocupada por outro dono (ex.: servidor manual): recusar com
+    // mensagem clara em vez de spawnar um filho que morre no mutex.
+    if port_busy(port) {
+        return Err(format!(
+            "PORTA OCUPADA: já há um servidor em 127.0.0.1:{port} (desligue o manual ou mude a porta)"
+        ));
+    }
+
     // Layout sob demanda; overrides só p/ dev/prova (ex.: bundle existente).
     let java_bin = java_path.map(PathBuf::from).unwrap_or_else(|| java_bin_for(&data_dir));
     let jar = jar_path.map(PathBuf::from).unwrap_or_else(|| jar_for(&data_dir));
@@ -209,6 +253,9 @@ fn server_start_inner(
         ));
     }
 
+    // KCEF: explícito > marcador em disco > desligado (lazy).
+    let kcef = kcef.unwrap_or_else(|| read_kcef(&data_dir));
+
     // HOCON via -D prefere barras normais no Windows.
     let root = data_dir.to_string_lossy().replace('\\', "/");
     let mut cmd = Command::new(&java_bin);
@@ -220,7 +267,9 @@ fn server_start_inner(
         ))
         .arg("-Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false")
         .arg("-Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false")
-        .arg("-Dsuwayomi.tachidesk.config.server.kcefEnabled=false")
+        .arg(format!(
+            "-Dsuwayomi.tachidesk.config.server.kcefEnabled={kcef}"
+        ))
         .arg("-jar")
         .arg(&jar)
         .stdin(Stdio::null())
@@ -239,6 +288,7 @@ fn server_start_inner(
     let info = StartedInfo {
         pid: child.id(),
         port,
+        kcef,
         data_dir: data_dir.to_string_lossy().to_string(),
         java_bin: java_bin.to_string_lossy().to_string(),
         jar: jar.to_string_lossy().to_string(),

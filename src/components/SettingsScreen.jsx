@@ -5,13 +5,35 @@ import { addExtensionRepo, listRepos, removeRepo, refreshServerExtensions } from
 import { refreshServerSources } from '../lib/parser/sources.js';
 import { clearServerSourceCache } from '../lib/sourceRegistry.js';
 import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js';
-import { sidecarStatus, sidecarStart, sidecarStop, sidecarDownload } from '../../desktop/frontend-integration/sidecar.js';
+import { sidecarStatus, sidecarStart, sidecarStop, sidecarDownload, sidecarSetKcef } from '../../desktop/frontend-integration/sidecar.js';
 
 /**
  * SettingsScreen — Configurações > Motor + Biblioteca > Repositórios.
  * O app sai vazio (sem repos, sem extensões): o usuário adiciona o
  * indexUrl do repo que quiser (Keiyoushi ou outro compatível com Mihon).
+ *
+ * Layout em sanfona: uma seção aberta por vez (motor / embutido / biblioteca).
  */
+function Section({ icon, title, hint, open, onToggle, children }) {
+  return (
+    <section className="ext-manager__content">
+      <button
+        className="ext-manager__refresh"
+        onClick={onToggle}
+        aria-expanded={open}
+        title={open ? `Recolher ${title}` : `Expandir ${title}`}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px' }}
+      >
+        <span className="material-symbols-outlined">{icon}</span>
+        <span className="mono-cap" style={{ flex: 1, textAlign: 'left' }}>{title}</span>
+        {hint && <span className="ext-manager__stat-label">{hint}</span>}
+        <span className="material-symbols-outlined">{open ? 'expand_less' : 'expand_more'}</span>
+      </button>
+      {open && children}
+    </section>
+  );
+}
+
 export default function SettingsScreen() {
   const [config, setConfig] = useState(() => getSuwayomiConfig());
   const [baseUrlInput, setBaseUrlInput] = useState(config.baseUrl);
@@ -26,6 +48,8 @@ export default function SettingsScreen() {
   const [sidecar, setSidecar] = useState(null);
   const [sidecarBusy, setSidecarBusy] = useState(false);
   const [dlProgress, setDlProgress] = useState(null);
+  const [openSection, setOpenSection] = useState('motor');
+  const toggleSection = (id) => setOpenSection((cur) => (cur === id ? null : id));
 
   const loadRepos = async (cfg = config) => {
     setReposLoading(true);
@@ -115,6 +139,26 @@ export default function SettingsScreen() {
       flash(res?.cached ? 'Motor já estava baixado.' : `Motor baixado (${res?.javaVersion ?? 'java ok'}).`);
     } catch (err) {
       setDlProgress(null);
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setSidecarBusy(false);
+    }
+  };
+
+  const handleSidecarKcef = async () => {
+    const next = !sidecar?.kcef;
+    setSidecarBusy(true);
+    try {
+      await sidecarSetKcef(next);
+      if (sidecar?.running) {
+        await sidecarStop();
+        await sidecarStart();
+      }
+      await refreshSidecar();
+      flash(next
+        ? 'WebView ligado. O Chromium (~260MB) baixa sozinho no primeiro site com Cloudflare.'
+        : 'WebView desligado.');
+    } catch (err) {
       flash(String(err?.message ?? err), true);
     } finally {
       setSidecarBusy(false);
@@ -216,8 +260,13 @@ export default function SettingsScreen() {
         </div>
       )}
 
-      <section className="ext-manager__content">
-        <p className="mono-cap">Motor local</p>
+      <Section
+        icon="dns"
+        title="Motor local"
+        hint={health?.online ? `${health.sourceCount ?? '–'} fontes` : 'offline'}
+        open={openSection === 'motor'}
+        onToggle={() => toggleSection('motor')}
+      >
         <ServerStatus />
         <div className="ext-manager__search">
           <span className="material-symbols-outlined">dns</span>
@@ -240,11 +289,16 @@ export default function SettingsScreen() {
             </button>
           </span>
         </div>
-      </section>
+      </Section>
 
       {isDesktop && (
-        <section className="ext-manager__content">
-          <p className="mono-cap">Motor embutido (desktop)</p>
+        <Section
+          icon="terminal"
+          title="Motor embutido (desktop)"
+          hint={sidecar?.running ? `PID ${sidecar.info?.pid}` : sidecar?.needsDownload ? 'baixar' : 'parado'}
+          open={openSection === 'sidecar'}
+          onToggle={() => toggleSection('sidecar')}
+        >
           <p className="ext-manager__subtitle">
             {sidecar?.running
               ? `Rodando (PID ${sidecar.info?.pid}) em ${sidecar.dataDir}`
@@ -271,11 +325,33 @@ export default function SettingsScreen() {
               </button>
             </span>
           </div>
-        </section>
+          {!sidecar?.needsDownload && (
+            <div className="ext-manager__count">
+              <span title="Resolve Cloudflare em alguns sites (ex.: Comix). Baixa ~260MB de Chromium no primeiro uso.">
+                WebView p/ Cloudflare {sidecar?.kcef ? '(ligado)' : '(desligado)'}
+              </span>
+              <span>
+                <button
+                  className="ext-manager__refresh"
+                  onClick={handleSidecarKcef}
+                  disabled={sidecarBusy}
+                  title={sidecar?.kcef ? 'Desligar WebView' : 'Ligar WebView'}
+                >
+                  <span className="material-symbols-outlined">{sidecar?.kcef ? 'toggle_on' : 'toggle_off'}</span>
+                </button>
+              </span>
+            </div>
+          )}
+        </Section>
       )}
 
-      <section className="ext-manager__content">
-        <p className="mono-cap">Biblioteca / repositório de extensões</p>
+      <Section
+        icon="store"
+        title="Biblioteca / repositório de extensões"
+        hint={`${repos.length} repos`}
+        open={openSection === 'library'}
+        onToggle={() => toggleSection('library')}
+      >
         <p className="ext-manager__subtitle">
           O Sumi sai vazio. Cole o link do <strong>index.json</strong> do repositório
           (Keiyoushi ou outro compatível com Mihon) para carregar as extensões.
@@ -335,7 +411,7 @@ export default function SettingsScreen() {
             ))}
           </div>
         )}
-      </section>
+      </Section>
     </div>
   );
 }

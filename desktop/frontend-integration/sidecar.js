@@ -41,7 +41,8 @@ export function sidecarStatus() {
 
 /**
  * Sobe o motor oculto (idempotente: se já vivo, devolve o atual).
- * @param {object} [opts] - { port?: number, javaPath?: string, jarPath?: string }
+ * @param {object} [opts] - { port?: number, javaPath?: string, jarPath?: string,
+ *   kcef?: boolean|null } (`kcef: null` = usa o marcador em disco.)
  *   (`javaPath`/`jarPath` são override de dev/prova; o padrão é o layout
  *   sob demanda dentro do data-dir fixo. Sem os arquivos, rejeita com
  *   `NEEDS_DOWNLOAD: ...`.)
@@ -51,7 +52,18 @@ export function sidecarStart(opts = {}) {
     port: opts.port ?? null,
     javaPath: opts.javaPath ?? null,
     jarPath: opts.jarPath ?? null,
+    kcef: opts.kcef ?? null,
   });
+}
+
+/**
+ * Opt-in do WebView KCEF (Cloudflare): persiste o marcador em disco.
+ * Exige restart do motor para valer (o chamador reinicia).
+ * @param {boolean} enabled
+ * @returns {Promise<{kcef: boolean}>}
+ */
+export function sidecarSetKcef(enabled) {
+  return invoke('server_set_kcef', { enabled: Boolean(enabled) });
 }
 
 /** Para o motor (mata só o PID filho). @returns {Promise<boolean>} tinha vivo? */
