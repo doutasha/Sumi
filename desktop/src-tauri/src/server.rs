@@ -313,6 +313,113 @@ pub fn server_stop(state: tauri::State<ServerState>) -> Result<bool, String> {
     Ok(had)
 }
 
+/// Tamanho em bytes de um caminho (arquivo ou árvore). Erros viram 0.
+fn path_size(path: &std::path::Path) -> u64 {
+    if path.is_file() {
+        return path.metadata().map(|m| m.len()).unwrap_or(0);
+    }
+    let mut total = 0u64;
+    let mut stack = vec![path.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        let entries = match std::fs::read_dir(&dir) {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_dir() {
+                stack.push(p);
+            } else {
+                total += entry.metadata().map(|m| m.len()).unwrap_or(0);
+            }
+        }
+    }
+    total
+}
+
+/// Apaga TODOS os dados do motor (zona de perigo) — ou só mede (`preview`).
+/// Mantém sempre o runtime (jre/ + Suwayomi-Server.jar) para não rebaixar
+/// 220MB; remove banco, downloads, backups, capas, settings, KCEF e o
+/// marcador kcef. Para o filho antes. Exige motor parado depois (o chamador
+/// reinicia do zero).
+#[tauri::command]
+pub fn server_wipe_data(
+    app: AppHandle,
+    state: tauri::State<ServerState>,
+    preview: Option<bool>,
+) -> Result<serde_json::Value, String> {
+    let base = sumi_data_dir(&app)?;
+    let preview = preview.unwrap_or(false);
+
+    // Guarda real: sem filho nosso mas com a porta ocupada, há um servidor
+    // estranho (ex.: sonda, manual) com o banco aberto — apagar por baixo
+    // dele corrompe sem limpar de verdade. Pare-o antes.
+    {
+        let inner = state
+            .inner
+            .lock()
+            .map_err(|_| "estado do servidor travado".to_string())?;
+        let tracked = inner.child.is_some();
+        drop(inner);
+        if (!tracked && port_busy(default_port()) && !preview) {
+            return Err(
+                "há outro servidor na porta (sonda/manual?) — pare-o antes de apagar".to_string(),
+            );
+        }
+    }
+
+    // Para o filho primeiro (banco aberto não se apaga).
+    shutdown_server(&state);
+
+    let jar_name = std::ffi::OsString::from("Suwayomi-Server.jar");
+    let mut freed: u64 = 0;
+    let mut kept: Vec<String> = vec![];
+    let entries: Vec<_> = std::fs::read_dir(&base)
+        .map_err(|e| format!("ler data-dir: {e}"))?
+        .flatten()
+        .collect();
+    for entry in entries {
+        let path = entry.path();
+        let name = entry.file_name();
+        if path.is_dir() && name == "jre" {
+            kept.push("jre/".to_string());
+            continue;
+        }
+        if path.is_dir() && name == "bin" {
+            // Dentro de bin/: mantém o JAR, apaga o resto (kcef etc.).
+            let inner: Vec<_> = std::fs::read_dir(&path)
+                .map_err(|e| format!("ler bin/: {e}"))?
+                .flatten()
+                .collect();
+            for sub in inner {
+                if sub.path().is_file() && sub.file_name() == jar_name {
+                    kept.push("bin/Suwayomi-Server.jar".to_string());
+                    continue;
+                }
+                freed += path_size(&sub.path());
+                if !preview {
+                    let p = sub.path();
+                    if p.is_dir() {
+                        std::fs::remove_dir_all(&p).map_err(|e| format!("apagar {}: {e}", p.display()))?;
+                    } else {
+                        std::fs::remove_file(&p).map_err(|e| format!("apagar {}: {e}", p.display()))?;
+                    }
+                }
+            }
+            continue;
+        }
+        freed += path_size(&path);
+        if !preview {
+            if path.is_dir() {
+                std::fs::remove_dir_all(&path).map_err(|e| format!("apagar {}: {e}", path.display()))?;
+            } else {
+                std::fs::remove_file(&path).map_err(|e| format!("apagar {}: {e}", path.display()))?;
+            }
+        }
+    }
+    Ok(serde_json::json!({ "freedBytes": freed, "kept": kept, "preview": preview }))
+}
+
 // ---------- Download sob demanda (JRE slim + JAR, ~220MB) ----------
 //
 // Tudo verificado por HEAD/hashes em 2026-09-07 e pinado abaixo.

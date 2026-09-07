@@ -47,6 +47,7 @@ fn main() {
             server::server_stop,
             server::server_download,
             server::server_set_kcef,
+            server::server_wipe_data,
         ])
         // Autostart oculto (4d-2 item 1): tenta subir o motor junto do app.
         // Nunca falha o boot: sem arquivos ou porta ocupada, só recua e o

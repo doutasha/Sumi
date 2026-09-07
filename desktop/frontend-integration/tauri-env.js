@@ -49,14 +49,14 @@ export async function tauriFetch(url, opts = {}) {
   }
 
   try {
-    const res = await fetchFn(url, {
+    // NÃO lançar em !ok aqui: o client.js traduz HTTP vs rede vs timeout.
+    // (Lançar Error puro mascarava todo HTTP como UNREACHABLE — provado.)
+    return await fetchFn(url, {
       ...rest,
       method,
       headers: mergedHeaders,
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status} (tauri)`);
-    return res;
   } finally {
     clearTimeout(timer);
     if (signal) signal.removeEventListener('abort', onOuterAbort);

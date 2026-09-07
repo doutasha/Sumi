@@ -7,6 +7,7 @@ import { clearServerSourceCache } from '../lib/sourceRegistry.js';
 import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js';
 import { sidecarStatus, sidecarStart, sidecarStop, sidecarDownload, sidecarSetKcef } from '../../desktop/frontend-integration/sidecar.js';
 import { checkForUpdates, installUpdate, currentVersion } from '../../desktop/frontend-integration/updater.js';
+import { clearCaches, wipeAllAppData, wipePreview, formatBytes } from '../lib/parser/maintenance.js';
 
 /**
  * SettingsScreen — Configurações > Motor + Biblioteca > Repositórios.
@@ -55,6 +56,9 @@ export default function SettingsScreen() {
   const [updateInfo, setUpdateInfo] = useState(null);
   const [updateBusy, setUpdateBusy] = useState(false);
   const [upProgress, setUpProgress] = useState(null);
+  const [maintBusy, setMaintBusy] = useState(false);
+  const [wipeArmed, setWipeArmed] = useState(false);
+  const [wipeBytes, setWipeBytes] = useState(null);
 
   const loadRepos = async (cfg = config) => {
     setReposLoading(true);
@@ -209,6 +213,45 @@ export default function SettingsScreen() {
     const { received = 0, total = 0 } = upProgress;
     if (!total) return `Baixando… (${(received / 1048576).toFixed(0)}MB)`;
     return `Baixando… ${Math.round((received / total) * 100)}% (${(received / 1048576).toFixed(0)}/${(total / 1048576).toFixed(0)}MB)`;
+  };
+
+  const handleClearCaches = async () => {
+    setMaintBusy(true);
+    try {
+      const res = await clearCaches();
+      await loadRepos();
+      setHealth(await checkHealth().catch((err) => ({ online: false, message: err.message })));
+      flash(`Cache limpo (${res.frontendKeys} locais${res.serverImages ? ' + capas do motor' : ''}).`);
+    } catch (err) {
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setMaintBusy(false);
+    }
+  };
+
+  const handleWipe = async () => {
+    if (!wipeArmed) {
+      setWipeArmed(true);
+      try {
+        const prev = await wipePreview().catch(() => null);
+        if (prev) setWipeBytes(prev.freedBytes);
+      } catch {
+        /* mostra sem o tamanho */
+      }
+      window.setTimeout(() => setWipeArmed(false), 8000);
+      return;
+    }
+    setMaintBusy(true);
+    try {
+      const res = await wipeAllAppData();
+      flash(`Tudo apagado (${formatBytes(res?.freedBytes)}). Reiniciando zerado…`);
+      window.setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      flash(String(err?.message ?? err), true);
+    } finally {
+      setMaintBusy(false);
+      setWipeArmed(false);
+    }
   };
 
   const dlLabel = () => {
@@ -493,6 +536,47 @@ export default function SettingsScreen() {
           </div>
         </Section>
       )}
+
+      <Section
+        icon="cleaning_services"
+        title="Dados e cache"
+        hint=""
+        open={openSection === 'data'}
+        onToggle={() => toggleSection('data')}
+      >
+        <div className="ext-manager__count">
+          <span>Limpar caches (seguro, configs intactas)</span>
+          <span>
+            <button
+              className="ext-manager__refresh"
+              onClick={handleClearCaches}
+              disabled={maintBusy}
+              title="Limpar caches"
+            >
+              <span className="material-symbols-outlined">mop</span>
+            </button>
+          </span>
+        </div>
+        {isDesktop && (
+          <div className="ext-manager__count">
+            <span>
+              {wipeArmed
+                ? `APAGA TUDO${wipeBytes ? ` (~${formatBytes(wipeBytes)})` : ''}: biblioteca, downloads, repos e configs. Clique de novo p/ confirmar.`
+                : 'Apagar TODOS os dados do app (JRE+JAR mantidos)'}
+            </span>
+            <span>
+              <button
+                className="ext-manager__refresh"
+                onClick={handleWipe}
+                disabled={maintBusy}
+                title="Apagar todos os dados"
+              >
+                <span className="material-symbols-outlined">{wipeArmed ? 'warning' : 'delete_forever'}</span>
+              </button>
+            </span>
+          </div>
+        )}
+      </Section>
     </div>
   );
 }

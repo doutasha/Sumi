@@ -20,6 +20,8 @@ repositórios de extensões que quiser.
 
 - MangaDex nativo; catálogo/instalação/atualização de extensões via repos
 - Biblioteca local, histórico, lidos/não-lidos, backup/restauração JSON
+- Importa biblioteca do Mihon (`.tachibk`): favoritos com fonte instalada,
+  capítulos lidos e categorias, direto no motor
 - Busca global com filtro de idioma; navegação por fonte
 - Sem importar backups do Mihon/Tachiyomi
 

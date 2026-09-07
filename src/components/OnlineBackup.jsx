@@ -4,6 +4,8 @@ import {
   getBackupSummary,
   importSumiBackup,
 } from '../lib/onlineStorage.js';
+import { parseTachibk } from '../lib/parser/tachibk.js';
+import { importBackup } from '../lib/parser/library.js';
 
 const METRICS = [
   { key: 'favorites', label: 'biblioteca' },
@@ -20,7 +22,9 @@ function backupFileName() {
 
 export default function OnlineBackup({ onRestore }) {
   const fileInputRef = useRef(null);
+  const tachibkInputRef = useRef(null);
   const [status, setStatus] = useState(null);
+  const [importProgress, setImportProgress] = useState(null);
   const summary = getBackupSummary();
 
   const handleExport = () => {
@@ -62,6 +66,31 @@ export default function OnlineBackup({ onRestore }) {
       });
     } catch (err) {
       setStatus({ type: 'error', text: err.message || 'Falha ao restaurar backup.' });
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleTachibkImport = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const parsed = await parseTachibk(await file.arrayBuffer());
+      const favs = parsed.manga.filter((m) => m.favorite === true).length;
+      const confirmed = window.confirm(
+        `Importar biblioteca do Mihon para o motor? ${favs} favoritos em ${parsed.manga.length} títulos. Só entra o que tiver fonte instalada.`
+      );
+      if (!confirmed) return;
+      setImportProgress({ done: 0, total: favs, current: '' });
+      const report = await importBackup(parsed, {
+        onProgress: (p) => setImportProgress(p),
+      });
+      setImportProgress(null);
+      onRestore?.();
+      setStatus({ type: report.errors.length ? 'error' : 'success', text: reportText(report) });
+    } catch (err) {
+      setImportProgress(null);
+      setStatus({ type: 'error', text: err.message || 'Falha ao importar .tachibk.' });
     } finally {
       event.target.value = '';
     }
@@ -112,6 +141,37 @@ export default function OnlineBackup({ onRestore }) {
         </div>
       </section>
 
+      <section className="online-backup__panel">
+        <div className="online-backup__panel-main">
+          <p className="mono-cap">Arquivo do Mihon (.tachibk)</p>
+          <h3>Biblioteca, lidos e categorias no motor</h3>
+          <p>
+            Só favoritos com fonte instalada entram. Capítulos lidos e
+            progresso voltam junto.
+          </p>
+          {importProgress && (
+            <p>
+              Importando {importProgress.done}/{importProgress.total}
+              {importProgress.current ? `: ${importProgress.current}` : ''}…
+            </p>
+          )}
+        </div>
+
+        <div className="online-backup__actions">
+          <button className="online-backup__button online-backup__button--primary" onClick={() => tachibkInputRef.current?.click()} type="button">
+            <span className="material-symbols-outlined">upload_file</span>
+            Importar Mihon
+          </button>
+          <input
+            ref={tachibkInputRef}
+            accept=".tachibk,.proto.gz"
+            hidden
+            onChange={handleTachibkImport}
+            type="file"
+          />
+        </div>
+      </section>
+
       {status && (
         <div className={`online-backup__status online-backup__status--${status.type}`}>
           <span className="material-symbols-outlined">
@@ -122,4 +182,12 @@ export default function OnlineBackup({ onRestore }) {
       )}
     </div>
   );
+}
+
+function reportText(report) {
+  const parts = [`${report.imported} títulos na biblioteca`, `${report.chaptersMarked} capítulos marcados`];
+  if (report.missingSource.length) parts.push(`${report.missingSource.length} sem fonte instalada`);
+  if (report.notFound.length) parts.push(`${report.notFound.length} não achados`);
+  if (report.errors.length) parts.push(`${report.errors.length} erros`);
+  return `Mihon importado: ${parts.join(', ')}.`;
 }
