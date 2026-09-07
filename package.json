@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "tauri:dev": "node desktop/scripts/tauri.mjs dev",
     "tauri:build": "node desktop/scripts/tauri.mjs build",
-    "package:windows": "node desktop/scripts/tauri.mjs build; node desktop/scripts/package-windows.mjs",
+    "package:windows": "node desktop/scripts/tauri.mjs build && node desktop/scripts/package-windows.mjs",
     "tauri:icon": "tauri icon desktop/assets/icon.svg --output desktop/src-tauri/icons"
   },
   "dependencies": {
