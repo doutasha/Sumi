@@ -1,0 +1,71 @@
+/* Tour guiado: penumbra, anel no alvo e cartão de instrução. */
+
+.tour-dim {
+  background: rgba(0, 0, 0, 0.62);
+  pointer-events: none;
+  position: fixed;
+  z-index: 90;
+}
+
+.tour-ring {
+  border: 2px solid var(--shu);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px rgba(217, 58, 43, 0.28), 0 0 26px rgba(217, 58, 43, 0.35);
+  pointer-events: none;
+  position: fixed;
+  z-index: 91;
+}
+
+.tour-card {
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-top: 3px solid var(--shu);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  box-sizing: border-box;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 16px 16px 14px;
+  position: fixed;
+  z-index: 92;
+}
+
+.tour-card__kicker {
+  color: var(--shu);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  margin: 0 0 6px;
+}
+
+.tour-card__title {
+  color: var(--paper-0);
+  font-family: var(--f-ui);
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.tour-card__text {
+  color: var(--paper-1);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.tour-card__row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.tour-card__dots {
+  color: var(--paper-3);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.tour-card__actions {
+  display: flex;
+  gap: 8px;
+}

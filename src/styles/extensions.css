@@ -699,6 +699,139 @@
   color: var(--shu);
 }
 
+/* ============================================================
+   CONFIG — hierarquia legível, ritmo compacto, ações junto do texto.
+   Reusa botões e cores do padrão (backup/cards); nada de novo inventado.
+   ============================================================ */
+
+.cfg-sec {
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  margin-bottom: 12px;
+  min-height: 0;
+  padding: 6px 14px 12px;
+}
+
+.cfg-head {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--paper-0);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 54px;
+  padding: 6px 0;
+  text-align: left;
+  width: 100%;
+}
+
+.cfg-num {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--shu);
+  border-radius: 0;
+  color: var(--shu);
+  display: flex;
+  flex-shrink: 0;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  font-weight: 700;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.cfg-title {
+  color: var(--paper-0);
+  flex: 1;
+  font-family: var(--f-ui);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  min-width: 0;
+}
+
+.cfg-status {
+  color: var(--paper-2);
+  flex-shrink: 0;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cfg-status--ok {
+  color: var(--green);
+}
+
+.cfg-status--warn {
+  color: var(--shu);
+}
+
+.cfg-head .material-symbols-outlined {
+  color: var(--paper-2);
+}
+
+.cfg-row {
+  align-items: center;
+  border-top: 1px solid var(--ink-4);
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.cfg-row__label {
+  color: var(--paper-1);
+  flex: 1;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.cfg-row__label small {
+  color: var(--paper-2);
+  display: block;
+  font-size: 12px;
+}
+
+.cfg-row__actions {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.cfg-note {
+  color: var(--paper-2);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 8px 0;
+  max-width: 640px;
+}
+
+.cfg-note strong {
+  color: var(--paper-0);
+}
+
+.cfg-progress {
+  color: var(--paper-1);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  margin: 8px 0;
+}
+
+.cfg-danger .cfg-row__label {
+  color: var(--paper-1);
+}
+
+.cfg-danger-armed {
+  border-color: var(--danger);
+}
+
 @media (max-width: 980px) {
   .ext-manager__hero {
     align-items: flex-start;

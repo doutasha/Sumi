@@ -9,6 +9,7 @@ import { sidecarStatus, sidecarStart, sidecarStop, sidecarDownload, sidecarSetKc
 import { checkForUpdates, installUpdate, currentVersion } from '../../desktop/frontend-integration/updater.js';
 import { clearCaches, wipeAllAppData, wipePreview, formatBytes } from '../lib/parser/maintenance.js';
 import { getStoredLocale, setLocale, t } from '../lib/i18n.js';
+import { TOUR_SECTION_EVENT, startTour } from '../lib/tour.js';
 
 /**
  * SettingsScreen — Configurações > Motor + Biblioteca > Repositórios.
@@ -17,19 +18,21 @@ import { getStoredLocale, setLocale, t } from '../lib/i18n.js';
  *
  * Layout em sanfona: uma seção aberta por vez (motor / embutido / biblioteca).
  */
-function Section({ icon, title, hint, open, onToggle, children }) {
+function Section({ id, num, title, hint, hintTone, open, onToggle, children }) {
   return (
-    <section className="ext-manager__content">
+    <section className="ext-manager__content cfg-sec">
       <button
-        className="ext-manager__refresh"
+        className="cfg-head"
+        data-tour={id ? `cfg-${id}` : undefined}
         onClick={onToggle}
         aria-expanded={open}
         title={open ? `Recolher ${title}` : `Expandir ${title}`}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px' }}
       >
-        <span className="material-symbols-outlined">{icon}</span>
-        <span className="mono-cap" style={{ flex: 1, textAlign: 'left' }}>{title}</span>
-        {hint && <span className="ext-manager__stat-label">{hint}</span>}
+        <span className="cfg-num">{num}</span>
+        <span className="cfg-title">{title}</span>
+        {hint && (
+          <span className={`cfg-status${hintTone ? ` cfg-status--${hintTone}` : ''}`}>{hint}</span>
+        )}
         <span className="material-symbols-outlined">{open ? 'expand_less' : 'expand_more'}</span>
       </button>
       {open && children}
@@ -53,6 +56,16 @@ export default function SettingsScreen() {
   const [dlProgress, setDlProgress] = useState(null);
   const [openSection, setOpenSection] = useState('motor');
   const toggleSection = (id) => setOpenSection((cur) => (cur === id ? null : id));
+  // Numeração segue as seções VISÍVEIS (2 e 4 são só-desktop).
+  const visibleSections = [
+    'motor',
+    ...(isDesktop ? ['sidecar'] : []),
+    'library',
+    ...(isDesktop ? ['updates'] : []),
+    'data',
+    'lang',
+  ];
+  const numOf = (id) => visibleSections.indexOf(id) + 1;
   const [appVersion, setAppVersion] = useState(null);
   const [updateInfo, setUpdateInfo] = useState(null);
   const [updateBusy, setUpdateBusy] = useState(false);
@@ -80,6 +93,12 @@ export default function SettingsScreen() {
       sidecarStatus().then(setSidecar).catch(() => setSidecar(null));
       currentVersion().then(setAppVersion).catch(() => {});
     }
+    const onTourSection = (event) => {
+      const id = event?.detail;
+      if (typeof id === 'string') setOpenSection(id);
+    };
+    window.addEventListener(TOUR_SECTION_EVENT, onTourSection);
+    return () => window.removeEventListener(TOUR_SECTION_EVENT, onTourSection);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -332,6 +351,21 @@ export default function SettingsScreen() {
           <p className="ext-manager__subtitle">
             Motor local, repositórios de extensões e biblioteca.
           </p>
+          <p className="cfg-note">
+            Motor <strong>Suwayomi-Server</strong> · extensões compatíveis com
+            <strong> Keiyoushi/Mihon</strong> · Sumi sem conteúdo embutido.
+          </p>
+          <p className="cfg-note">
+            <button
+              className="online-backup__button"
+              onClick={() => startTour()}
+              title={t('welcome.tour')}
+              type="button"
+            >
+              <span className="material-symbols-outlined">tour</span>
+              {t('welcome.tour')}
+            </button>
+          </p>
         </div>
         <div className="ext-manager__stats">
           <div>
@@ -358,9 +392,11 @@ export default function SettingsScreen() {
       )}
 
       <Section
-        icon="dns"
+        id="motor"
+        num={numOf('motor')}
         title="Motor local"
         hint={health?.online ? `${health.sourceCount ?? '–'} fontes` : 'offline'}
+        hintTone={health?.online ? 'ok' : 'warn'}
         open={openSection === 'motor'}
         onToggle={() => toggleSection('motor')}
       >
@@ -375,14 +411,16 @@ export default function SettingsScreen() {
             aria-label="Endereço do motor"
           />
         </div>
-        <div className="ext-manager__count">
-          <span>Salvar e testar conexão</span>
-          <span>
-            <button className="ext-manager__refresh" onClick={handleSaveEngine} title="Salvar e testar">
+        <div className="cfg-row">
+          <span className="cfg-row__label">Conexão com o motor<small>Salva o endereço e testa na hora.</small></span>
+          <span className="cfg-row__actions">
+            <button className="online-backup__button" onClick={handleSaveEngine} title="Salvar e testar">
               <span className="material-symbols-outlined">save</span>
-            </button>{' '}
-            <button className="ext-manager__refresh" onClick={handleToggleEngine} title={config.enabled ? 'Desligar motor (modo leve)' : 'Ligar motor'}>
+              Salvar
+            </button>
+            <button className="online-backup__button" onClick={handleToggleEngine} title={config.enabled ? 'Desligar motor (modo leve)' : 'Ligar motor'}>
               <span className="material-symbols-outlined">{config.enabled ? 'toggle_on' : 'toggle_off'}</span>
+              {config.enabled ? 'Ligado' : 'Leve'}
             </button>
           </span>
         </div>
@@ -390,51 +428,54 @@ export default function SettingsScreen() {
 
       {isDesktop && (
         <Section
-          icon="terminal"
-          title="Motor embutido (desktop)"
+          id="sidecar"
+          num={numOf('sidecar')}
+          title="Motor embutido"
           hint={sidecar?.running ? `PID ${sidecar.info?.pid}` : sidecar?.needsDownload ? 'baixar' : 'parado'}
+          hintTone={sidecar?.running ? 'ok' : 'warn'}
           open={openSection === 'sidecar'}
           onToggle={() => toggleSection('sidecar')}
         >
-          <p className="ext-manager__subtitle">
+          <p className="cfg-note">
             {sidecar?.running
-              ? `Rodando (PID ${sidecar.info?.pid}) em ${sidecar.dataDir}`
+              ? `Rodando (PID ${sidecar.info?.pid}). O app fecha o processo junto.`
               : sidecar?.needsDownload
-                ? 'JRE slim + JAR (~220MB) ainda não baixados. O download é sob demanda, com progresso e verificação SHA-256.'
-                : 'Parado. O app fecha o processo junto (kill-on-close).'}
+                ? <>JRE + JAR (~220MB) ainda não baixados — <strong>sob demanda, com SHA-256.</strong></>
+                : 'Parado.'}
           </p>
           {dlProgress && (
-            <p className="ext-manager__subtitle">{dlLabel()}</p>
+            <p className="cfg-progress">{dlLabel()}</p>
           )}
-          <div className="ext-manager__count">
-            <span>{sidecar?.running ? 'Parar motor' : sidecar?.needsDownload ? 'Baixar motor' : 'Iniciar motor oculto'}</span>
-            <span>
+          <div className="cfg-row">
+            <span className="cfg-row__label">{sidecar?.running ? 'Motor em execução' : sidecar?.needsDownload ? 'Baixar o motor' : 'Subir o motor oculto'}</span>
+            <span className="cfg-row__actions">
               <button
-                className="ext-manager__refresh"
+                className="online-backup__button online-backup__button--primary"
                 onClick={sidecar?.running ? handleSidecarStop : sidecar?.needsDownload ? handleSidecarDownload : handleSidecarStart}
                 disabled={sidecarBusy}
                 title={sidecar?.running ? 'Parar motor' : sidecar?.needsDownload ? 'Baixar JRE + JAR' : 'Iniciar motor'}
               >
                 <span className="material-symbols-outlined">{sidecar?.running ? 'stop' : sidecar?.needsDownload ? 'download' : 'play_arrow'}</span>
-              </button>{' '}
-              <button className="ext-manager__refresh" onClick={refreshSidecar} title="Atualizar status">
+                {sidecar?.running ? 'Parar' : sidecar?.needsDownload ? 'Baixar' : 'Iniciar'}
+              </button>
+              <button className="online-backup__button" onClick={refreshSidecar} title="Atualizar status">
                 <span className="material-symbols-outlined">refresh</span>
+                Status
               </button>
             </span>
           </div>
           {!sidecar?.needsDownload && (
-            <div className="ext-manager__count">
-              <span title="Resolve Cloudflare em alguns sites (ex.: Comix). Baixa ~260MB de Chromium no primeiro uso.">
-                WebView p/ Cloudflare {sidecar?.kcef ? '(ligado)' : '(desligado)'}
-              </span>
-              <span>
+            <div className="cfg-row">
+              <span className="cfg-row__label">WebView p/ Cloudflare<small>Resolve Comix e afins. Baixa ~260MB de Chromium no primeiro uso.</small></span>
+              <span className="cfg-row__actions">
                 <button
-                  className="ext-manager__refresh"
+                  className="online-backup__button"
                   onClick={handleSidecarKcef}
                   disabled={sidecarBusy}
                   title={sidecar?.kcef ? 'Desligar WebView' : 'Ligar WebView'}
                 >
                   <span className="material-symbols-outlined">{sidecar?.kcef ? 'toggle_on' : 'toggle_off'}</span>
+                  {sidecar?.kcef ? 'Ligado' : 'Desligado'}
                 </button>
               </span>
             </div>
@@ -443,15 +484,16 @@ export default function SettingsScreen() {
       )}
 
       <Section
-        icon="store"
-        title="Biblioteca / repositório de extensões"
+        id="library"
+        num={numOf('library')}
+        title="Repositórios de extensões"
         hint={`${repos.length} repos`}
         open={openSection === 'library'}
         onToggle={() => toggleSection('library')}
       >
-        <p className="ext-manager__subtitle">
+        <p className="cfg-note">
           O Sumi sai vazio. Cole o link do <strong>index.json</strong> do repositório
-          (Keiyoushi ou outro compatível com Mihon) para carregar as extensões.
+          (Keiyoushi ou outro compatível com Mihon).
         </p>
         <div className="ext-manager__search">
           <span className="material-symbols-outlined">add_link</span>
@@ -512,33 +554,36 @@ export default function SettingsScreen() {
 
       {isDesktop && (
         <Section
-          icon="system_update"
+          id="updates"
+          num={numOf('updates')}
           title="Atualizações"
-          hint={appVersion ? `v${appVersion}` : ''}
+          hint={updateInfo ? `v${updateInfo.version} nova` : appVersion ? `v${appVersion}` : ''}
+          hintTone={updateInfo ? 'warn' : ''}
           open={openSection === 'updates'}
           onToggle={() => toggleSection('updates')}
         >
-          <p className="ext-manager__subtitle">
+          <p className="cfg-note">
             {updateInfo
-              ? `Nova versão v${updateInfo.version} disponível${updateInfo.date ? ` (${updateInfo.date.slice(0, 10)})` : ''}.`
-              : 'Verifica releases novas no GitHub e instala por cima (sem duplicar).'}
+              ? <>Nova versão <strong>v{updateInfo.version}</strong> disponível{updateInfo.date ? ` (${updateInfo.date.slice(0, 10)})` : ''}.</>
+              : 'Verifica releases no GitHub e instala por cima (sem duplicar).'}
           </p>
           {updateInfo?.body && (
-            <p className="ext-manager__subtitle">{updateInfo.body.slice(0, 600)}</p>
+            <p className="cfg-note">{updateInfo.body.slice(0, 600)}</p>
           )}
           {upProgress && (
-            <p className="ext-manager__subtitle">{upLabel()}</p>
+            <p className="cfg-progress">{upLabel()}</p>
           )}
-          <div className="ext-manager__count">
-            <span>{updateInfo ? `Instalar v${updateInfo.version}` : 'Verificar agora'}</span>
-            <span>
+          <div className="cfg-row">
+            <span className="cfg-row__label">{updateInfo ? `Instalar v${updateInfo.version}` : 'Buscar atualizações'}</span>
+            <span className="cfg-row__actions">
               <button
-                className="ext-manager__refresh"
+                className="online-backup__button online-backup__button--primary"
                 onClick={updateInfo ? handleInstallUpdate : handleCheckUpdates}
                 disabled={updateBusy}
                 title={updateInfo ? 'Baixar e instalar' : 'Verificar atualizações'}
               >
                 <span className="material-symbols-outlined">{updateInfo ? 'download' : 'refresh'}</span>
+                {updateInfo ? 'Instalar' : 'Verificar'}
               </button>
             </span>
           </div>
@@ -546,40 +591,42 @@ export default function SettingsScreen() {
       )}
 
       <Section
-        icon="cleaning_services"
+        id="data"
+        num={numOf('data')}
         title="Dados e cache"
         hint=""
         open={openSection === 'data'}
         onToggle={() => toggleSection('data')}
       >
-        <div className="ext-manager__count">
-          <span>Limpar caches (seguro, configs intactas)</span>
-          <span>
+        <div className="cfg-row">
+          <span className="cfg-row__label">Limpar caches<small>Seguro. Configs e biblioteca intactas.</small></span>
+          <span className="cfg-row__actions">
             <button
-              className="ext-manager__refresh"
+              className="online-backup__button"
               onClick={handleClearCaches}
               disabled={maintBusy}
               title="Limpar caches"
             >
               <span className="material-symbols-outlined">mop</span>
+              Limpar
             </button>
           </span>
         </div>
         {isDesktop && (
-          <div className="ext-manager__count">
-            <span>
-              {wipeArmed
-                ? `APAGA TUDO${wipeBytes ? ` (~${formatBytes(wipeBytes)})` : ''}: biblioteca, downloads, repos e configs. Clique de novo p/ confirmar.`
-                : 'Apagar TODOS os dados do app (JRE+JAR mantidos)'}
+          <div className="cfg-row">
+            <span className="cfg-row__label">
+              {wipeArmed ? 'APAGA TUDO: biblioteca, downloads, repos e configs. Clique de novo p/ confirmar.' : 'Apagar todos os dados'}
+              <small>{wipeArmed && wipeBytes ? `~${formatBytes(wipeBytes)} — JRE+JAR mantidos.` : 'JRE+JAR mantidos.'}</small>
             </span>
-            <span>
+            <span className="cfg-row__actions">
               <button
-                className="ext-manager__refresh"
+                className="online-backup__button online-backup__button--primary"
                 onClick={handleWipe}
                 disabled={maintBusy}
                 title="Apagar todos os dados"
               >
                 <span className="material-symbols-outlined">{wipeArmed ? 'warning' : 'delete_forever'}</span>
+                {wipeArmed ? 'Confirmar' : 'Apagar'}
               </button>
             </span>
           </div>
@@ -587,29 +634,31 @@ export default function SettingsScreen() {
       </Section>
 
       <Section
-        icon="translate"
+        id="lang"
+        num={numOf('lang')}
         title={t('lang.title')}
         hint={storedLocale === 'auto' ? 'auto' : storedLocale}
         open={openSection === 'lang'}
         onToggle={() => toggleSection('lang')}
       >
-        <p className="ext-manager__subtitle">{t('lang.hint')}</p>
+        <p className="cfg-note">{t('lang.hint')}</p>
         {[
           { value: 'auto', label: t('welcome.auto') },
           { value: 'pt', label: 'Português (BR)' },
           { value: 'en', label: 'English' },
         ].map((opt) => (
-          <div className="ext-manager__count" key={opt.value}>
-            <span>{opt.label}</span>
-            <span>
+          <div className="cfg-row" key={opt.value}>
+            <span className="cfg-row__label">{opt.label}</span>
+            <span className="cfg-row__actions">
               <button
-                className="ext-manager__refresh"
+                className="online-backup__button"
                 onClick={() => handleLocale(opt.value)}
                 title={opt.label}
               >
                 <span className="material-symbols-outlined">
                   {storedLocale === opt.value ? 'radio_button_checked' : 'radio_button_unchecked'}
                 </span>
+                {storedLocale === opt.value ? 'Ativo' : 'Usar'}
               </button>
             </span>
           </div>

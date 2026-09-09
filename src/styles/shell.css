@@ -141,8 +141,15 @@
   border-top: 1px solid var(--ink-4);
   display: flex;
   gap: 10px;
+  justify-content: center;
   margin-top: auto;
   padding: 18px 20px 0;
+}
+
+.sumi-sidebar__footer .mono-cap {
+  color: var(--paper-2);
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
 }
 
 .sumi-sidebar__dot {

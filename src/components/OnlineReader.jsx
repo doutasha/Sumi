@@ -5,6 +5,8 @@ import { checkHealth, getSuwayomiConfig } from '../lib/parser/connection.js';
 import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js';
 import { watchServer } from '../../desktop/frontend-integration/sidecar.js';
 import { checkForUpdates } from '../../desktop/frontend-integration/updater.js';
+import Tour from './Tour.jsx';
+import { tourSteps, TOUR_START_EVENT } from '../lib/tour.js';
 import OnlineLibrary from './OnlineLibrary.jsx';
 import SourceBrowser from './SourceBrowser.jsx';
 import MangaDetailPage from './MangaDetailPage.jsx';
@@ -70,7 +72,7 @@ function findChapterIndex(chapters, chapter) {
 }
 
 // NAV STACK
-export default function OnlineReader() {
+export default function OnlineReader({ startTour = false }) {
   const [sources, setSources] = useState([]);
   const [categories, setCategories] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -79,8 +81,22 @@ export default function OnlineReader() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [navStack, setNavStack] = useState([]);
   const [pendingUpdate, setPendingUpdate] = useState(null);
+  const [tourActive, setTourActive] = useState(false);
 
   useEffect(() => { loadData(); }, []);
+
+  // Tour: pedido do Welcome (1º boot) ou replay (evento).
+  useEffect(() => {
+    if (startTour) setTourActive(true);
+  }, [startTour]);
+  useEffect(() => {
+    const onStart = () => {
+      setNavStack([]);
+      setTourActive(true);
+    };
+    window.addEventListener(TOUR_START_EVENT, onStart);
+    return () => window.removeEventListener(TOUR_START_EVENT, onStart);
+  }, []);
 
   // Vigia do motor embutido (desktop): relança sozinho se o java morrer.
   // Só no Tauri; no browser vira no-op. Silencioso por desenho.
@@ -207,6 +223,7 @@ export default function OnlineReader() {
           {MAIN_VIEWS.map(view => (
             <button
               key={view.id}
+              data-tour={`nav-${view.id}`}
               className={`sumi-nav__item${activeView === view.id ? ' active' : ''}`}
               onClick={() => setActiveView(view.id)}
             >
@@ -218,9 +235,7 @@ export default function OnlineReader() {
         </nav>
 
         <div className="sumi-sidebar__footer">
-          <span className="mono-cap">Keiyoushi</span>
-          <span className="sumi-sidebar__dot" />
-          <span className="mono-cap">{sources.length} fontes</span>
+          <span className="mono-cap">Sumi</span>
         </div>
       </aside>
 
@@ -302,6 +317,13 @@ export default function OnlineReader() {
           )}
         </main>
       </div>
+      {tourActive && (
+        <Tour
+          steps={tourSteps(isTauriRuntime())}
+          onNavigate={(view) => { setNavStack([]); setActiveView(view); }}
+          onDone={() => setTourActive(false)}
+        />
+      )}
     </div>
   );
 }

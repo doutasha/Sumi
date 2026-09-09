@@ -16,9 +16,9 @@ export default function Welcome({ onDone }) {
     setTick((n) => n + 1);
   };
 
-  const finish = () => {
+  const finish = (withTour = false) => {
     markWelcomed();
-    onDone?.(effective);
+    onDone?.({ tour: withTour });
   };
 
   const options = [
@@ -73,10 +73,20 @@ export default function Welcome({ onDone }) {
       <button
         className="online-backup__button online-backup__button--primary welcome__cta welcome__rise"
         style={{ '--d': '460ms' }}
-        onClick={finish}
+        onClick={() => finish(false)}
         type="button"
       >
         {t('welcome.continue')}
+      </button>
+
+      <button
+        className="online-backup__button welcome__cta welcome__rise"
+        style={{ '--d': '520ms' }}
+        onClick={() => finish(true)}
+        type="button"
+      >
+        <span className="material-symbols-outlined">tour</span>
+        {t('welcome.tour')}
       </button>
     </div>
   );
