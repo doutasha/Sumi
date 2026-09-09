@@ -550,6 +550,17 @@ fn extract_jre(app: &AppHandle, zip_path: &std::path::Path, jre_dir: &std::path:
         } else {
             if let Some(parent) = target.parent() {
                 std::fs::create_dir_all(parent).map_err(|e| format!("criar dir: {e}"))?;
+                // Barreira extra anti-symlink: o pai real tem que continuar
+                // dentro de jre/ mesmo após resolver links.
+                let canon_base = jre_dir
+                    .canonicalize()
+                    .map_err(|e| format!("canonicalizar jre: {e}"))?;
+                let canon_parent = parent
+                    .canonicalize()
+                    .map_err(|e| format!("canonicalizar destino: {e}"))?;
+                if !canon_parent.starts_with(&canon_base) {
+                    return Err(format!("zip: destino fora de jre/ ({})", target.display()));
+                }
             }
             let mut out =
                 std::fs::File::create(&target).map_err(|e| format!("extrair: {e}"))?;

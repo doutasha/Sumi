@@ -170,6 +170,9 @@ function parseManga(bytes) {
   };
 }
 
+/** Teto anti-bomba: backup real tem ~2MB; acima disso recusa antes de decodificar. */
+const MAX_BYTES = 64 * 1048576;
+
 /**
  * @param {ArrayBuffer|Uint8Array} input conteúdo do .tachibk
  * @returns {Promise<{manga: Array, categories: Array<{name,order}>,
@@ -177,6 +180,9 @@ function parseManga(bytes) {
  */
 export async function parseTachibk(input) {
   const raw = input instanceof Uint8Array ? input : new Uint8Array(input);
+  if (raw.length > MAX_BYTES) {
+    throw new Error(`Backup grande demais (${(raw.length / 1048576).toFixed(0)}MB, limite 64MB)`);
+  }
   const gzipped = raw.length >= 2 && raw[0] === GZIP_MAGIC_0 && raw[1] === GZIP_MAGIC_1;
   const bytes = await maybeGunzip(raw);
   const root = decodeFields(bytes);
