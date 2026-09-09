@@ -1,5 +1,7 @@
 # Sumi 墨
 
+*[Read in English](./README.en.md).*
+
 Leitor local de mangás (PT/EN): MangaDex como fonte nativa + motor de
 extensões embutido (Suwayomi-Server local). O app sai **vazio** — você
 adiciona os repositórios de extensões que quiser.

@@ -16,7 +16,9 @@ infraestrutura nossa.
 | MangaDex | Fonte nativa via API pública | (conteúdo dos respectivos scanlators/editores) | https://api.mangadex.org |
 
 Créditos: obrigado aos projetos Suwayomi, Mihon/Tachiyomi e Keiyoushi,
-sem os quais este app não existiria.
+sem os quais este app não existiria. Cadeia completa de créditos do motor
+(TachiWeb, AndroidCompat e outros): https://github.com/Suwayomi/Suwayomi-Server
+(seção Credit do README deles).
 
 ## Direitos autorais de obras
 
