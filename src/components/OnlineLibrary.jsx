@@ -11,6 +11,19 @@ import {
 import { confirmDialog, toast } from './Toast.jsx';
 import { t } from '../lib/i18n.js';
 
+/** Nome exibido: ids padrão traduzem; customs mostram o nome do usuário. */
+export function catDisplayName(category) {
+  if (!category) return null;
+  switch (category.id) {
+    case 'reading': return t('cat.reading');
+    case 'completed': return t('cat.completed');
+    case 'plan-to-read': return t('cat.planToRead');
+    case 'on-hold': return t('cat.onHold');
+    case 'dropped': return t('cat.dropped');
+    default: return category.name;
+  }
+}
+
 const SORTS = [
   { value: 'az', labelKey: 'lib.sortAZ' },
   { value: 'recent', labelKey: 'lib.sortRecent' },
@@ -96,7 +109,8 @@ export default function OnlineLibrary({
 
   const activeCategoryName = useMemo(() => {
     if (!activeCategory) return t('lib.all');
-    return categories.find(category => category.id === activeCategory)?.name ?? t('lib.categories');
+    const found = categories.find(category => category.id === activeCategory);
+    return catDisplayName(found) ?? t('lib.categories');
   }, [activeCategory, categories]);
 
   const sourceCount = useMemo(() => {
@@ -206,7 +220,7 @@ export default function OnlineLibrary({
                   type="button"
                 >
                   <span className="online-library__category-kanji">{'\u68da'}</span>
-                  <span>{category.name}</span>
+                  <span>{catDisplayName(category)}</span>
                   <span className="online-library__category-count">{count}</span>
                 </button>
                 <button

@@ -3,6 +3,7 @@ import { getMangaStorageKey, getChapterSnapshot, saveChapterSnapshot, recordChap
 import { getSourceImpl } from '../lib/sourceRegistry.js';
 import { toast } from './Toast.jsx';
 import { t } from '../lib/i18n.js';
+import { catDisplayName } from './OnlineLibrary.jsx';
 
 /**
  * OnlineUpdates — novos capítulos dos favoritos, estilo Mihon.
@@ -233,7 +234,7 @@ export default function OnlineUpdates({ favorites, onMangaOpen }) {
             <option value="all:">{t('upd.all')}</option>
             <optgroup label={t('upd.categories')}>
               {categories.map((c) => (
-                <option key={c.id} value={`category:${c.id}`}>{c.name}</option>
+                <option key={c.id} value={`category:${c.id}`}>{catDisplayName(c) || c.name}</option>
               ))}
             </optgroup>
             <optgroup label={t('upd.extensions')}>

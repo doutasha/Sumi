@@ -10,6 +10,7 @@
 import { suwayomiGet, suwayomiRequest } from './client.js';
 import { getSuwayomiConfig } from './connection.js';
 import { serverIconUrl } from './images.js';
+import { t } from '../i18n.js';
 
 export const EXTENSIONS_CACHE_KEY = 'sumi.suwayomi.extensions';
 export const DISABLED_EXT_KEY = 'sumi.suwayomi.disabledExt';
@@ -154,7 +155,13 @@ export async function addExtensionRepo(indexUrl, configOverride = null) {
     },
   });
   if (data?.errors?.length) {
-    throw new Error(data.errors[0]?.message || 'Falha ao adicionar repositório');
+    const raw = data.errors[0]?.message || 'Falha ao adicionar repositório';
+    // 5xx buscando o índice = repositório fora do ar (ex.: raw 503):
+    // mostra aviso curto em vez do stack Kotlin.
+    if (/HTTP error 5\d\d/i.test(raw)) {
+      throw new Error(t('cfg.repoUpstream'));
+    }
+    throw new Error(raw);
   }
   await refreshServerExtensions(config);
   return data?.data?.addExtensionStore?.extensionStore ?? null;

@@ -264,11 +264,11 @@ export default function OnlineReader({ startTour = false }) {
           <div className="sumi-topbar__stats">
             <div>
               <span className="sumi-stat__value">{favorites.length}</span>
-              <span className="sumi-stat__label">na biblioteca</span>
+              <span className="sumi-stat__label">{t('tb.inLibrary')}</span>
             </div>
             <div>
               <span className="sumi-stat__value">{history.length}</span>
-              <span className="sumi-stat__label">no histórico</span>
+              <span className="sumi-stat__label">{t('tb.inHistory')}</span>
             </div>
           </div>
         </header>
