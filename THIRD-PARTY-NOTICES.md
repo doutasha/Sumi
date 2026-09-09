@@ -27,3 +27,8 @@ sem os quais este app não existiria. Cadeia completa de créditos do motor
 Mangás pertencem aos seus autores, scanlators e editoras. O Sumi é um
 leitor: se você é titular de direitos e entende que algo aqui viola seus
 direitos, abra uma issue e responderemos.
+
+## Não-afiliação
+
+O desenvolvedor desta aplicação não possui nenhuma afiliação com os
+provedores de conteúdo disponíveis.

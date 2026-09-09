@@ -27,3 +27,8 @@ without which this app would not exist. Full upstream credit chain
 Manga belong to their authors, scanlators and publishers. Sumi is a
 reader: if you are a rights holder and believe something here violates
 your rights, open an issue and we will respond.
+
+## Non-affiliation
+
+The developer of this application does not have any affiliation with the
+content providers available.
