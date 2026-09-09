@@ -33,9 +33,9 @@ function toMap(records) {
 
 /**
  * Catálogo = extensões do(s) repo(s) ainda NÃO instaladas.
- * @param {boolean} forceRefresh - sempre busca do servidor (rápido, localhost)
+ * @param {boolean} _forceRefresh - reservado (sempre busca do servidor)
  */
-export async function fetchCatalog(forceRefresh = false) {
+export async function fetchCatalog(_forceRefresh = false) {
   const res = await refreshServerExtensions();
   return res.extensions.filter((ext) => !ext.installed && !ext.obsolete);
 }
@@ -87,7 +87,7 @@ export function toggleExtension(extId) {
 }
 
 /** Ids com update pendente (leitura síncrona do cache). */
-export function checkForUpdates(catalog = null) {
+export function checkForUpdates(_catalog = null) {
   return getCachedExtensions()
     .filter((ext) => ext.installed && ext.hasUpdate)
     .map((ext) => ext.id);

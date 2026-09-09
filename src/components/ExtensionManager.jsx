@@ -16,6 +16,7 @@ import {
 import { refreshServerSources, getExtensionSources } from '../lib/parser/sources.js';
 import { refreshServerExtensions } from '../lib/parser/extensions.js';
 import { clearServerSourceCache } from '../lib/sourceRegistry.js';
+import { toast } from './Toast.jsx';
 import {
   checkSourceCompatibility,
   getSourceHealthStore,
@@ -157,7 +158,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       setInstalled(getInstalledExtensions());
       onExtensionsChange?.();
     } catch (err) {
-      alert(`Falha ao instalar ${ext.name}: ${err.message}`);
+      toast(`Falha ao instalar ${ext.name}: ${err.message}`, 'error');
     } finally {
       setInstalling(prev => {
         const next = new Set(prev);
@@ -184,7 +185,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       setUpdatesAvailable(prev => prev.filter(id => id !== extId));
       onExtensionsChange?.();
     } catch (err) {
-      alert(`Falha ao atualizar: ${err.message}`);
+      toast(`Falha ao atualizar: ${err.message}`, 'error');
     } finally {
       setInstalling(prev => {
         const next = new Set(prev);
@@ -206,7 +207,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       await checkSourceCompatibility(source);
       setHealthStore(getSourceHealthStore());
     } catch (err) {
-      alert(`Falha ao testar ${source.name}: ${err.message}`);
+      toast(`Falha ao testar ${source.name}: ${err.message}`, 'error');
     } finally {
       setCheckingSources(prev => {
         const next = new Set(prev);

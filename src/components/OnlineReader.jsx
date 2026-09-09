@@ -6,6 +6,7 @@ import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js'
 import { watchServer } from '../../desktop/frontend-integration/sidecar.js';
 import { checkForUpdates } from '../../desktop/frontend-integration/updater.js';
 import Tour from './Tour.jsx';
+import { ToastHost } from './Toast.jsx';
 import { tourSteps, TOUR_START_EVENT } from '../lib/tour.js';
 import OnlineLibrary from './OnlineLibrary.jsx';
 import SourceBrowser from './SourceBrowser.jsx';
@@ -324,6 +325,7 @@ export default function OnlineReader({ startTour = false }) {
           onDone={() => setTourActive(false)}
         />
       )}
+      <ToastHost />
     </div>
   );
 }

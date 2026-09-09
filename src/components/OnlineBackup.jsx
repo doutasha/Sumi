@@ -5,7 +5,8 @@ import {
   importSumiBackup,
 } from '../lib/onlineStorage.js';
 import { parseTachibk } from '../lib/parser/tachibk.js';
-import { importBackup } from '../lib/parser/library.js';
+import { importBackup, isLibraryEntry } from '../lib/parser/library.js';
+import { confirmDialog } from './Toast.jsx';
 
 const METRICS = [
   { key: 'favorites', label: 'biblioteca' },
@@ -52,9 +53,11 @@ export default function OnlineBackup({ onRestore }) {
     try {
       const text = await file.text();
       const backup = JSON.parse(text);
-      const confirmed = window.confirm(
-        'Restaurar este backup vai substituir biblioteca, progresso, fontes e extensoes instaladas neste navegador. Continuar?'
-      );
+      const confirmed = await confirmDialog({
+        title: 'Restaurar backup?',
+        body: 'Substitui biblioteca, progresso, fontes e extensões instaladas neste navegador.',
+        confirmLabel: 'Restaurar',
+      });
 
       if (!confirmed) return;
 
@@ -76,10 +79,12 @@ export default function OnlineBackup({ onRestore }) {
     if (!file) return;
     try {
       const parsed = await parseTachibk(await file.arrayBuffer());
-      const favs = parsed.manga.filter((m) => m.favorite === true).length;
-      const confirmed = window.confirm(
-        `Importar biblioteca do Mihon para o motor? ${favs} favoritos em ${parsed.manga.length} títulos. Só entra o que tiver fonte instalada.`
-      );
+      const favs = parsed.manga.filter((m) => isLibraryEntry(m)).length;
+      const confirmed = await confirmDialog({
+        title: 'Importar do Mihon?',
+        body: `${favs} favoritos em ${parsed.manga.length} títulos. Só entra o que tiver fonte instalada.`,
+        confirmLabel: 'Importar',
+      });
       if (!confirmed) return;
       setImportProgress({ done: 0, total: favs, current: '' });
       const report = await importBackup(parsed, {

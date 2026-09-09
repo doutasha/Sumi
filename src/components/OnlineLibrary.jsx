@@ -5,6 +5,7 @@ import {
   getReadingProgress,
   removeFavorite,
 } from '../lib/onlineStorage.js';
+import { confirmDialog } from './Toast.jsx';
 
 function progressPercent(manga) {
   const progress = getReadingProgress(manga);
@@ -45,8 +46,13 @@ export default function OnlineLibrary({
     onDataChange();
   };
 
-  const handleDeleteCategory = (categoryId) => {
-    if (!window.confirm('Excluir esta categoria? Os mang\u00e1s n\u00e3o ser\u00e3o removidos da biblioteca.')) return;
+  const handleDeleteCategory = async (categoryId) => {
+    const confirmed = await confirmDialog({
+      title: 'Excluir categoria?',
+      body: 'Os mangás não serão removidos da biblioteca.',
+      confirmLabel: 'Excluir',
+    });
+    if (!confirmed) return;
     deleteCategory(categoryId);
     if (activeCategory === categoryId) {
       onCategoryChange(null);
@@ -54,8 +60,13 @@ export default function OnlineLibrary({
     onDataChange();
   };
 
-  const handleRemoveFavorite = (manga) => {
-    if (!window.confirm(`Remover "${manga.title}" da biblioteca?`)) return;
+  const handleRemoveFavorite = async (manga) => {
+    const confirmed = await confirmDialog({
+      title: 'Remover da biblioteca?',
+      body: `"${manga.title}"`,
+      confirmLabel: 'Remover',
+    });
+    if (!confirmed) return;
     removeFavorite(manga.id, manga.sourceId);
     onDataChange();
   };

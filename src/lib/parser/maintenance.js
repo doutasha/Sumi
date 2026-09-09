@@ -88,6 +88,8 @@ export async function wipeAllAppData() {
   const { invoke } = await import('@tauri-apps/api/core');
   const res = await invoke('server_wipe_data', { preview: false });
   try {
+    const { clearAllLocalData } = await import('../onlineStorage.js');
+    clearAllLocalData();
     for (const key of localKeys()) localStorage.removeItem(key);
   } catch {
     /* segue */

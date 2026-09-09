@@ -1,0 +1,89 @@
+/* Toasts + diálogo de confirmação no padrão Sumi. */
+
+.toast-stack {
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  left: 50%;
+  max-width: min(440px, calc(100vw - 32px));
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 120;
+}
+
+.toast {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-left: 3px solid var(--paper-3);
+  color: var(--paper-0);
+  display: flex;
+  font-size: 13px;
+  gap: 10px;
+  line-height: 1.5;
+  padding: 12px 14px;
+}
+
+.toast .material-symbols-outlined {
+  color: var(--paper-3);
+  flex-shrink: 0;
+}
+
+.toast--success {
+  border-left-color: var(--green);
+}
+
+.toast--success .material-symbols-outlined {
+  color: var(--green);
+}
+
+.toast--error {
+  border-left-color: var(--danger);
+}
+
+.toast--error .material-symbols-outlined {
+  color: var(--danger);
+}
+
+.toast-scrim {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 121;
+}
+
+.toast-dialog {
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-top: 3px solid var(--shu);
+  box-sizing: border-box;
+  max-width: 420px;
+  padding: 20px;
+  width: 100%;
+}
+
+.toast-dialog__title {
+  color: var(--paper-0);
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+.toast-dialog__body {
+  color: var(--paper-1);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+  white-space: pre-line;
+}
+
+.toast-dialog__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

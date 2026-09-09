@@ -78,7 +78,6 @@ function matchChapter(serverChapters, backupChapter) {
  * exato de URL. @returns {Promise<number|null>}
  */
 export async function findServerMangaId(sourceSid, title, url, config) {
-  const want = normUrl(url);
   for (let page = 1; page <= 3; page++) {
     const data = await gql(
       `mutation FindManga($source: LongString!, $query: String!, $page: Int!) {

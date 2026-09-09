@@ -19,6 +19,22 @@ const EXTENSION_STORAGE_KEYS = {
 
 const BACKUP_VERSION = 1;
 
+/** Todas as chaves locais do Sumi (wipe total passa por aqui). */
+export function clearAllLocalData() {
+  const keys = [...Object.values(STORAGE_KEYS), ...Object.values(EXTENSION_STORAGE_KEYS)];
+  let removed = 0;
+  try {
+    if (typeof localStorage === 'undefined') return 0;
+    for (const key of keys) {
+      localStorage.removeItem(key);
+      removed += 1;
+    }
+  } catch {
+    /* segue */
+  }
+  return removed;
+}
+
 function readJson(key, fallback) {
   try {
     const data = localStorage.getItem(key);
@@ -113,8 +129,7 @@ function snapshotChapter(chapter) {
 // === SOURCES ===
 export function getSources() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.SOURCES);
-    const stored = raw ? JSON.parse(raw) : [];
+    const stored = readJson(STORAGE_KEYS.SOURCES, []);
 
     // Keep builtins first and drop legacy mirror entries from old localStorage.
     const builtinIds = new Set(BUILTIN_SOURCES.map(b => b.id));
@@ -130,12 +145,7 @@ export function getSources() {
 }
 
 export function saveSources(sources) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.SOURCES, JSON.stringify(sources));
-    return true;
-  } catch {
-    return false;
-  }
+  return writeJson(STORAGE_KEYS.SOURCES, sources);
 }
 
 export function getDefaultSources() {
@@ -144,21 +154,12 @@ export function getDefaultSources() {
 
 // === CATEGORIES ===
 export function getCategories() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-    return data ? JSON.parse(data) : getDefaultCategories();
-  } catch {
-    return getDefaultCategories();
-  }
+  const data = readJson(STORAGE_KEYS.CATEGORIES, null);
+  return Array.isArray(data) ? data : getDefaultCategories();
 }
 
 export function saveCategories(categories) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
-    return true;
-  } catch {
-    return false;
-  }
+  return writeJson(STORAGE_KEYS.CATEGORIES, categories);
 }
 
 export function getDefaultCategories() {
@@ -199,21 +200,12 @@ export function deleteCategory(categoryId) {
 
 // === FAVORITES ===
 export function getFavorites() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS.FAVORITES);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
+  const data = readJson(STORAGE_KEYS.FAVORITES, null);
+  return Array.isArray(data) ? data : [];
 }
 
 export function saveFavorites(favorites) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
-    return true;
-  } catch {
-    return false;
-  }
+  return writeJson(STORAGE_KEYS.FAVORITES, favorites);
 }
 
 export function addFavorite(manga, categories = []) {
@@ -261,21 +253,12 @@ export function updateFavoriteCategories(mangaId, sourceId, categories) {
 
 // === SETTINGS ===
 export function getOnlineSettings() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    return data ? JSON.parse(data) : getDefaultOnlineSettings();
-  } catch {
-    return getDefaultOnlineSettings();
-  }
+  const data = readJson(STORAGE_KEYS.SETTINGS, null);
+  return data && typeof data === 'object' ? data : getDefaultOnlineSettings();
 }
 
 export function saveOnlineSettings(settings) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-    return true;
-  } catch {
-    return false;
-  }
+  return writeJson(STORAGE_KEYS.SETTINGS, settings);
 }
 
 export function getDefaultOnlineSettings() {

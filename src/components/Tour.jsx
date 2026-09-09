@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import '../styles/tour.css';
 import { t } from '../lib/i18n.js';
 import { openTourSection } from '../lib/tour.js';

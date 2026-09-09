@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '../styles/welcome.css';
-import { getLocale, getStoredLocale, setLocale, markWelcomed, t } from '../lib/i18n.js';
+import { getStoredLocale, setLocale, markWelcomed, t } from '../lib/i18n.js';
 
 /**
  * Welcome — primeiro boot: logo, idioma e começar. Centralizado, entrada
@@ -9,7 +9,6 @@ import { getLocale, getStoredLocale, setLocale, markWelcomed, t } from '../lib/i
 export default function Welcome({ onDone }) {
   const [, setTick] = useState(0);
   const stored = getStoredLocale();
-  const effective = getLocale();
 
   const pick = (value) => {
     setLocale(value);

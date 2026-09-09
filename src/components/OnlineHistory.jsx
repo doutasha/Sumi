@@ -1,5 +1,6 @@
 import React from 'react';
 import { clearReadingHistory } from '../lib/onlineStorage.js';
+import { confirmDialog } from './Toast.jsx';
 
 function chapterLabel(chapter) {
   if (!chapter) return 'Capitulo';
@@ -24,8 +25,13 @@ function progressPercent(entry) {
 }
 
 export default function OnlineHistory({ history, onDataChange, onMangaOpen, onContinue }) {
-  const handleClear = () => {
-    if (!window.confirm('Limpar todo o historico de leitura?')) return;
+  const handleClear = async () => {
+    const confirmed = await confirmDialog({
+      title: 'Limpar histórico?',
+      body: 'Apaga todo o histórico de leitura.',
+      confirmLabel: 'Limpar',
+    });
+    if (!confirmed) return;
     clearReadingHistory();
     onDataChange?.();
   };
