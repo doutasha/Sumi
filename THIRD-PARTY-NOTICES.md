@@ -1,5 +1,7 @@
 # Avisos de terceiros e posição sobre conteúdo
 
+*[Read in English](./THIRD-PARTY-NOTICES.en.md).*
+
 **O Sumi não hospeda, distribui nem embute mangás, extensões ou capítulos.**
 O app sai vazio: repositórios, fontes e biblioteca são adicionados pelo
 usuário, na máquina dele. Nada do tráfego de conteúdo passa por
