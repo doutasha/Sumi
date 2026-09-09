@@ -1,0 +1,108 @@
+/* Welcome de primeiro boot: centralizado, arejado, entrada em etapas. */
+
+.welcome {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 520px;
+  min-height: 100dvh;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.welcome__rise {
+  animation: welcome-rise 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes welcome-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome__rise {
+    animation: none;
+  }
+}
+
+.welcome__logo {
+  height: 96px;
+  width: 96px;
+}
+
+.welcome__kicker {
+  color: var(--shu);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  margin: 0;
+}
+
+.welcome__title {
+  color: var(--paper-0);
+  font-family: var(--f-display, var(--f-ui));
+  font-size: clamp(30px, 6vw, 44px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.welcome__subtitle {
+  color: var(--paper-2);
+  font-family: var(--f-ui);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.welcome__langs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.welcome__lang {
+  align-items: center;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  color: var(--paper-0);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  font-weight: 600;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.welcome__lang span:first-child {
+  flex: 1;
+  white-space: normal;
+}
+
+.welcome__lang--active {
+  border-color: var(--shu);
+}
+
+.welcome__cta {
+  font-size: 15px;
+  justify-content: center;
+  min-height: 52px;
+  width: 100%;
+}

@@ -8,6 +8,7 @@ import { isTauriRuntime } from '../../desktop/frontend-integration/tauri-env.js'
 import { sidecarStatus, sidecarStart, sidecarStop, sidecarDownload, sidecarSetKcef } from '../../desktop/frontend-integration/sidecar.js';
 import { checkForUpdates, installUpdate, currentVersion } from '../../desktop/frontend-integration/updater.js';
 import { clearCaches, wipeAllAppData, wipePreview, formatBytes } from '../lib/parser/maintenance.js';
+import { getStoredLocale, setLocale, t } from '../lib/i18n.js';
 
 /**
  * SettingsScreen — Configurações > Motor + Biblioteca > Repositórios.
@@ -59,6 +60,7 @@ export default function SettingsScreen() {
   const [maintBusy, setMaintBusy] = useState(false);
   const [wipeArmed, setWipeArmed] = useState(false);
   const [wipeBytes, setWipeBytes] = useState(null);
+  const [storedLocale, setStoredLocale] = useState(() => getStoredLocale());
 
   const loadRepos = async (cfg = config) => {
     setReposLoading(true);
@@ -252,6 +254,12 @@ export default function SettingsScreen() {
       setMaintBusy(false);
       setWipeArmed(false);
     }
+  };
+
+  const handleLocale = (value) => {
+    setLocale(value);
+    setStoredLocale(getStoredLocale());
+    flash(t('lang.saved'));
   };
 
   const dlLabel = () => {
@@ -576,6 +584,36 @@ export default function SettingsScreen() {
             </span>
           </div>
         )}
+      </Section>
+
+      <Section
+        icon="translate"
+        title={t('lang.title')}
+        hint={storedLocale === 'auto' ? 'auto' : storedLocale}
+        open={openSection === 'lang'}
+        onToggle={() => toggleSection('lang')}
+      >
+        <p className="ext-manager__subtitle">{t('lang.hint')}</p>
+        {[
+          { value: 'auto', label: t('welcome.auto') },
+          { value: 'pt', label: 'Português (BR)' },
+          { value: 'en', label: 'English' },
+        ].map((opt) => (
+          <div className="ext-manager__count" key={opt.value}>
+            <span>{opt.label}</span>
+            <span>
+              <button
+                className="ext-manager__refresh"
+                onClick={() => handleLocale(opt.value)}
+                title={opt.label}
+              >
+                <span className="material-symbols-outlined">
+                  {storedLocale === opt.value ? 'radio_button_checked' : 'radio_button_unchecked'}
+                </span>
+              </button>
+            </span>
+          </div>
+        ))}
       </Section>
     </div>
   );
