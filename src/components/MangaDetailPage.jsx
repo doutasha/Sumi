@@ -8,10 +8,14 @@ import {
   getReadingProgress,
   isFavorite,
   removeFavorite,
+  recordChapterCount,
+  getCachedChapterList,
+  saveCachedChapterList,
   setChapterReadStatus,
   setChaptersReadStatus,
   updateFavoriteCategories,
 } from '../lib/onlineStorage.js';
+import { t } from '../lib/i18n.js';
 
 const LANG_LABELS = {
   en: 'English',
@@ -28,17 +32,17 @@ const LANG_LABELS = {
 };
 
 const STATUS_LABELS = {
-  ongoing: 'Em andamento',
-  completed: 'Completo',
-  hiatus: 'Hiato',
-  cancelled: 'Cancelado',
+  ongoing: 'sb.st.ongoing',
+  completed: 'sb.st.completed',
+  hiatus: 'sb.st.hiatus',
+  cancelled: 'sb.st.cancelled',
 };
 
 const RATING_LABELS = {
-  safe: 'Seguro',
-  suggestive: 'Sugestivo',
-  erotica: 'Erótico',
-  pornographic: 'Adulto',
+  safe: 'det.r.safe',
+  suggestive: 'det.r.suggestive',
+  erotica: 'det.r.erotica',
+  pornographic: 'det.r.pornographic',
 };
 
 function getLookupId(manga) {
@@ -46,11 +50,11 @@ function getLookupId(manga) {
 }
 
 function statusLabel(status) {
-  return STATUS_LABELS[status] ?? status;
+  return t(STATUS_LABELS[status] ?? status);
 }
 
 function ratingLabel(rating) {
-  return RATING_LABELS[rating] ?? rating;
+  return t(RATING_LABELS[rating] ?? rating);
 }
 
 function languageLabel(code) {
@@ -94,7 +98,7 @@ function sameChapterList(a, b) {
   });
 }
 
-export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
+export default function MangaDetailPage({ manga, onChapterSelect, onBack, onDataChange }) {
   const [details, setDetails] = useState(manga);
   const [chapters, setChapters] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -199,6 +203,14 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
     if (!options.force && chapterLoadKeyRef.current === requestKey) return;
     chapterLoadKeyRef.current = requestKey;
 
+    // Cache primeiro (Mihon-style): mostra na hora, atualiza em fundo.
+    if (!options.force) {
+      const cached = getCachedChapterList(manga);
+      if (cached) {
+        setChapters(prev => (sameChapterList(prev, cached.chapters) ? prev : cached.chapters));
+      }
+    }
+
     const currentSeq = chapterLoadSeqRef.current + 1;
     chapterLoadSeqRef.current = currentSeq;
     const sourceImpl = getSourceImpl(manga.sourceId);
@@ -215,13 +227,15 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
       if (chapterLoadSeqRef.current !== currentSeq) return;
       const nextChapters = Array.isArray(loaded) ? loaded : [];
       setChapters(prev => (sameChapterList(prev, nextChapters) ? prev : nextChapters));
+      recordChapterCount(manga, nextChapters.length);
+      saveCachedChapterList(manga, nextChapters);
     } catch (err) {
       if (chapterLoadSeqRef.current !== currentSeq) return;
       setChaptersError(err.message);
     } finally {
       if (chapterLoadSeqRef.current === currentSeq) setLoadingChapters(false);
     }
-  }, [chapterLookupId, language, manga.sourceId]);
+  }, [chapterLookupId, language, manga]);
 
   useEffect(() => {
     setDetails(manga);
@@ -261,6 +275,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
     if (favorite) {
       removeFavorite(details.id, details.sourceId);
       setFavorite(false);
+      onDataChange?.();
       return;
     }
 
@@ -274,6 +289,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
     }
     setFavorite(true);
     setShowCategoryModal(false);
+    onDataChange?.();
   };
 
   const toggleCategory = (categoryId) => {
@@ -285,9 +301,9 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
   };
 
   const readActionLabel = primaryChapter && continueChapter
-    ? `Continuar ${chapterNumber(primaryChapter)}`
+    ? `${t('det.continue')} ${chapterNumber(primaryChapter)}`
     : primaryChapter
-      ? `Ler ${chapterNumber(primaryChapter)}`
+      ? `${t('det.read')} ${chapterNumber(primaryChapter)}`
       : '';
   const primaryChapterList = primaryChapter && visibleChapters.some(chapter => getChapterStorageKey(chapter) === getChapterStorageKey(primaryChapter))
     ? visibleChapters
@@ -350,7 +366,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
     <div className="manga-detail">
       <section className="manga-detail__hero">
         <div className="manga-detail__crumbs">
-          <button className="manga-detail__back" onClick={onBack} title="Voltar">
+          <button className="manga-detail__back" onClick={onBack} title={t('det.back')}>
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <span>Biblioteca</span>
@@ -401,7 +417,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
               <p className="manga-detail__desc">{details.description}</p>
             ) : (
               <p className="manga-detail__desc manga-detail__desc--empty">
-                Sem sinopse disponível nesta fonte.
+                {t('det.noSynopsis')}
               </p>
             )}
 
@@ -415,15 +431,15 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
             <div className="manga-detail__stats">
               <div>
                 <span>{chapters.length}</span>
-                <small>capítulos</small>
+                <small>{t('det.chapters')}</small>
               </div>
               <div>
                 <span>{details.status ? statusLabel(details.status) : '-'}</span>
-                <small>status</small>
+                <small>{t('det.status')}</small>
               </div>
               <div>
                 <span>{details.sourceName || impl?.name || '-'}</span>
-                <small>fonte</small>
+                <small>{t('det.source')}</small>
               </div>
             </div>
 
@@ -443,7 +459,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                 onClick={toggleFavorite}
               >
                 <span className="material-symbols-outlined">{favorite ? 'bookmark_remove' : 'bookmark_add'}</span>
-                {favorite ? 'Remover da biblioteca' : 'Adicionar à biblioteca'}
+                {favorite ? t('det.removeFromLib') : t('det.addToLib')}
               </button>
 
               {originalUrl && (
@@ -454,7 +470,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                   rel="noopener noreferrer"
                 >
                   <span className="material-symbols-outlined">open_in_new</span>
-                  Abrir fonte
+                  {t('det.openSource')}
                 </a>
               )}
             </div>
@@ -465,9 +481,9 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
       <section className="manga-detail__chapters">
         <div className="manga-detail__chapters-header">
           <div>
-            <p className="mono-cap mono-cap-shu">Capítulos</p>
+            <p className="mono-cap mono-cap-shu">{t('det.chaptersKicker')}</p>
             <h2 className="manga-detail__section-title">
-              Lista de capítulos
+              {t('det.chapterList')}
               <span className="chapter-count">{chapters.length}</span>
             </h2>
           </div>
@@ -484,7 +500,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                 ))}
               </select>
             )}
-            <button className="sort-btn" onClick={() => setSortDesc(value => !value)} title="Alternar ordem">
+            <button className="sort-btn" onClick={() => setSortDesc(value => !value)} title={t('det.sortOrder')}>
               <span className="material-symbols-outlined">
                 {sortDesc ? 'south' : 'north'}
               </span>
@@ -500,7 +516,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
               type="button"
             >
               <span className="material-symbols-outlined">{selectionMode ? 'close' : 'select_all'}</span>
-              {selectionMode ? 'Cancelar' : 'Selecionar'}
+              {selectionMode ? t('det.cancel') : t('det.select')}
             </button>
 
             {selectionMode ? (
@@ -511,9 +527,9 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                   type="button"
                 >
                   <span className="material-symbols-outlined">{allVisibleSelected ? 'deselect' : 'select_all'}</span>
-                  {allVisibleSelected ? 'Limpar selecao' : 'Todos visiveis'}
+                  {allVisibleSelected ? t('det.clearSelection') : t('det.allVisible')}
                 </button>
-                <span className="chapter-bulk-toolbar__count">{selectedCount} selecionado{selectedCount === 1 ? '' : 's'}</span>
+                <span className="chapter-bulk-toolbar__count">{selectedCount} {selectedCount === 1 ? t('det.selected') : t('det.selectedPl')}</span>
                 <button
                   className="chapter-bulk-btn"
                   onClick={() => updateSelectedReadStatus(true)}
@@ -521,7 +537,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                   type="button"
                 >
                   <span className="material-symbols-outlined">done_all</span>
-                  Marcar lido
+                  {t('det.markRead')}
                 </button>
                 <button
                   className="chapter-bulk-btn"
@@ -530,11 +546,11 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                   type="button"
                 >
                   <span className="material-symbols-outlined">remove_done</span>
-                  Desmarcar lido
+                  {t('det.unmarkRead')}
                 </button>
               </>
             ) : (
-              <span className="chapter-bulk-toolbar__count">Acoes em lote</span>
+              <span className="chapter-bulk-toolbar__count">{t('det.batchActions')}</span>
             )}
           </div>
         )}
@@ -542,14 +558,14 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
         {loadingDetails && (
           <div className="chapters-loading">
             <div className="spinner" />
-            <p>Carregando detalhes...</p>
+            <p>{t('det.loadingDetails')}</p>
           </div>
         )}
 
         {loadingChapters && (
           <div className="chapters-loading">
             <div className="spinner" />
-            <p>Carregando capítulos...</p>
+            <p>{t('det.loadingChapters')}</p>
           </div>
         )}
 
@@ -559,7 +575,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
             <p>{chaptersError}</p>
             <button className="sb-retry" onClick={() => loadChapters(language, { force: true })}>
               <span className="material-symbols-outlined">refresh</span>
-              Tentar novamente
+              {t('det.retry')}
             </button>
           </div>
         )}
@@ -567,7 +583,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
         {!loadingChapters && !chaptersError && chapters.length === 0 && (
           <div className="chapters-empty">
             <span className="material-symbols-outlined">menu_book</span>
-            <p>Nenhum capítulo encontrado nesta fonte.</p>
+            <p>{t('det.noChapters')}</p>
           </div>
         )}
 
@@ -576,10 +592,10 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
             <div className="chapter-row chapter-row--head" aria-hidden="true">
               <span />
               <span>#</span>
-              <span>Título</span>
-              <span>Grupo</span>
-              <span>Páginas</span>
-              <span>Data</span>
+              <span>{t('det.colTitle')}</span>
+              <span>{t('det.colGroup')}</span>
+              <span>{t('det.colPages')}</span>
+              <span>{t('det.colDate')}</span>
               <span />
               <span />
             </div>
@@ -611,11 +627,11 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                   <span className="chapter-row__num">{chapter.chapter || index + 1}</span>
                   <span className="chapter-row__title">
                     {chapterTitle(chapter)}
-                    {isCurrent && !isRead && <small className="chapter-row__badge">Em leitura</small>}
-                    {isRead && <small className="chapter-row__badge">Lido</small>}
+                    {isCurrent && !isRead && <small className="chapter-row__badge">{t('det.readingNow')}</small>}
+                    {isRead && <small className="chapter-row__badge">{t('det.readBadge')}</small>}
                   </span>
                   <span className="chapter-row__group">{chapter.group || '-'}</span>
-                  <span className="chapter-row__pages">{chapter.pages ? `${chapter.pages} pg` : '-'}</span>
+                  <span className="chapter-row__pages">{chapter.pages ? `${chapter.pages} ${t('det.pagesUnit')}` : '-'}</span>
                   <span className="chapter-row__date">{chapterDate(chapter)}</span>
                   <span className="material-symbols-outlined chapter-row__arrow">chevron_right</span>
                   <button
@@ -624,7 +640,7 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
                       event.stopPropagation();
                       updateChapterReadStatus(chapter, !isRead);
                     }}
-                    title={isRead ? 'Desmarcar como lido' : 'Marcar como lido'}
+                    title={isRead ? t('det.unmarkRead') : t('det.markRead')}
                     type="button"
                   >
                     <span className="material-symbols-outlined">{isRead ? 'remove_done' : 'done'}</span>
@@ -640,14 +656,14 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
         <div className="modal-overlay" onClick={() => setShowCategoryModal(false)}>
           <div className="modal" onClick={event => event.stopPropagation()}>
             <div className="modal__header">
-              <h2>Adicionar à biblioteca</h2>
+              <h2>{t('det.addToLib')}</h2>
               <button className="modal__close" onClick={() => setShowCategoryModal(false)}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             <div className="modal__body">
               {categories.length === 0 ? (
-                <p className="modal__hint">Nenhuma categoria criada. O mangá será salvo sem categoria.</p>
+                <p className="modal__hint">{t('det.noCategories')}</p>
               ) : (
                 <div className="cat-checkbox-list">
                   {categories.map(category => (
@@ -665,10 +681,10 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack }) {
             </div>
             <div className="modal__footer">
               <button className="modal__btn modal__btn--secondary" onClick={() => setShowCategoryModal(false)}>
-                Cancelar
+                {t('lib.cancel')}
               </button>
               <button className="modal__btn modal__btn--primary" onClick={saveFavorite}>
-                Salvar
+                {t('det.save')}
               </button>
             </div>
           </div>

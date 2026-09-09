@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { getSourceImpl } from '../lib/sourceRegistry.js';
 import { saveReadingProgress } from '../lib/onlineStorage.js';
+import { t } from '../lib/i18n.js';
 
 const CHAPTER_LOAD_TIMEOUT = 30_000;
 const MAX_READER_PAGES = 250;
@@ -379,17 +380,17 @@ export default function ChapterReader({
     onProgressChange?.();
   }, [chapter, currentPage, manga, onProgressChange, pages.length]);
 
-  const chapterLabel = chapter.chapter ? `Cap. ${chapter.chapter}` : 'Oneshot';
+  const chapterLabel = chapter.chapter ? `${t('rd.chapterShort')} ${chapter.chapter}` : t('rd.oneshot');
   const pageLabel = pages.length
     ? `${currentPage + 1} / ${pages.length}`
-    : `${pages.length || '-'} pags.`;
+    : `${pages.length || '-'} ${t('rd.pagesUnit')}`;
   const firstPageReady = pages.length > 0 && loadedPageKeys.has(getPageRenderKey(pages[0], 0));
   const currentPageReady = pages.length > 0 &&
     loadedPageKeys.has(getPageRenderKey(pages[currentPage], currentPage));
   const waitingForImage = !loading && !error && pages.length > 0 &&
     (mode === 'paged' ? !currentPageReady : !firstPageReady);
   const showReaderLoading = loading || waitingForImage;
-  const loadingLabel = loading ? 'Carregando capÃ­tulo...' : 'Carregando pÃ¡gina...';
+  const loadingLabel = loading ? t('rd.loadingChapter') : t('rd.loadingPage');
 
   return (
     <div
@@ -398,7 +399,7 @@ export default function ChapterReader({
       onClick={() => setUiVisible(visible => !visible)}
       onScroll={scheduleVerticalPageUpdate}
     >
-      <button className="reader-safe-back" onClick={handleBack} title="Sair do leitor" type="button">
+      <button className="reader-safe-back" onClick={handleBack} title={t('rd.exitReader')} type="button">
         <span className="material-symbols-outlined">close</span>
       </button>
 
@@ -441,10 +442,10 @@ export default function ChapterReader({
           onClick={event => event.stopPropagation()}
         >
           <div className="spinner spinner--lg" />
-          <p>Carregando capítulo...</p>
+          <p>{t('rd.loadingChapter')}</p>
           <button className="sb-retry" onClick={handleBack} type="button">
             <span className="material-symbols-outlined">arrow_back</span>
-            Voltar
+            {t('rd.back')}
           </button>
         </div>
       )}
@@ -456,11 +457,11 @@ export default function ChapterReader({
           <div className="reader-error__actions">
             <button className="sb-retry" onClick={loadPages} type="button">
               <span className="material-symbols-outlined">refresh</span>
-              Tentar novamente
+              {t('rd.retry')}
             </button>
             <button className="sb-retry" onClick={handleBack} type="button">
               <span className="material-symbols-outlined">arrow_back</span>
-              Voltar
+              {t('rd.back')}
             </button>
           </div>
         </div>
@@ -479,7 +480,7 @@ export default function ChapterReader({
             />
           ))}
           <div className="reader-chapter-end" onClick={event => event.stopPropagation()}>
-            <p>Fim do capítulo</p>
+            <p>{t('rd.chapterEnd')}</p>
             <div className="reader-end-actions">
               <button
                 className="reader-nav-btn reader-nav-btn--secondary"
@@ -488,7 +489,7 @@ export default function ChapterReader({
                 type="button"
               >
                 <span className="material-symbols-outlined">chevron_left</span>
-                Capítulo anterior
+                {t('rd.prevChapter')}
               </button>
               <button
                 className="reader-nav-btn"
@@ -496,7 +497,7 @@ export default function ChapterReader({
                 onClick={handleNextClick}
                 type="button"
               >
-                Próximo capítulo
+                {t('rd.nextChapter')}
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>
             </div>
@@ -520,7 +521,7 @@ export default function ChapterReader({
               type="button"
             >
               <span className="material-symbols-outlined">chevron_left</span>
-              {currentPage === 0 && hasPrev ? 'Cap. anterior' : 'Anterior'}
+              {currentPage === 0 && hasPrev ? t('rd.prevChapterShort') : t('rd.prev')}
             </button>
             <span className="reader-page-indicator">
               {currentPage + 1} / {pages.length}
@@ -531,7 +532,7 @@ export default function ChapterReader({
               onClick={handleNextClick}
               type="button"
             >
-              {currentPage === pages.length - 1 && hasNext ? 'Próx. cap.' : 'Próxima'}
+              {currentPage === pages.length - 1 && hasNext ? t('rd.nextChapterShort') : t('rd.next')}
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </div>
@@ -544,7 +545,7 @@ export default function ChapterReader({
             className="reader-btn"
             disabled={!hasPrev}
             onClick={handlePrevClick}
-            title="Capítulo anterior"
+            title={t('rd.prevChapter')}
             type="button"
           >
             <span className="material-symbols-outlined">skip_previous</span>
@@ -554,7 +555,7 @@ export default function ChapterReader({
             className="reader-btn"
             disabled={!hasNext}
             onClick={handleNextClick}
-            title="Próximo capítulo"
+            title={t('rd.nextChapter')}
             type="button"
           >
             <span className="material-symbols-outlined">skip_next</span>
@@ -583,12 +584,12 @@ const ReaderPage = React.forwardRef(function ReaderPage({ url, index, onLayoutCh
       {err ? (
         <div className="reader-page__error">
           <span className="material-symbols-outlined">broken_image</span>
-          <p>Não foi possível carregar a página {index + 1}</p>
+          <p>{t('rd.pageFail')} {index + 1}</p>
         </div>
       ) : (
         <img
           src={url}
-          alt={`Página ${index + 1}`}
+          alt={`${t('rd.pageAlt')} ${index + 1}`}
           onLoad={() => {
             setLoaded(true);
             onPageSettled?.(url, index);

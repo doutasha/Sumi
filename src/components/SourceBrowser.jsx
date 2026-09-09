@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { getSourceImpl } from '../lib/sourceRegistry.js';
 import { getCachedServerSources, sourceOwnerPkg } from '../lib/parser/sources.js';
+import { t } from '../lib/i18n.js';
 
 const LANGS = [
   { value: 'en', label: 'English' },
@@ -57,13 +58,13 @@ function calcPageSize() {
 }
 
 function getModeLabel(tab, isSearching) {
-  if (isSearching) return 'Busca';
+  if (isSearching) return t('sb.searching');
   return {
-    popular: 'Popular',
-    recent: 'Recentes',
-    'top-rated': 'Melhor avaliados',
-    new: 'Novos',
-  }[tab] ?? 'Navega\u00e7\u00e3o';
+    popular: t('sb.popular'),
+    recent: t('sb.recent'),
+    'top-rated': t('sb.topRated'),
+    new: t('sb.new'),
+  }[tab] ?? t('sb.browseMode');
 }
 
 export default function SourceBrowser({ source, siblings, onMangaSelect, onBack }) {
@@ -240,8 +241,8 @@ export default function SourceBrowser({ source, siblings, onMangaSelect, onBack 
 
   if (!impl || impl.supportsBrowse === false) {
     const message = !impl
-      ? `Esta fonte não possui integração de API ainda.${source?.id ? ` (${source.id})` : ''}`
-      : 'Esta extens\u00e3o foi instalada, mas o parser ainda n\u00e3o suporta o formato dela.';
+      ? `${t('sb.noApi')}${source?.id ? ` (${source.id})` : ''}`
+      : t('sb.noParser');
 
     return (
       <div className="source-browser source-browser--sumi">
@@ -280,11 +281,11 @@ export default function SourceBrowser({ source, siblings, onMangaSelect, onBack 
           <button
             className={`sb-filter-toggle${filterOpen ? ' active' : ''}`}
             onClick={() => setFilterOpen(open => !open)}
-            title="Filtrar"
+            title={t('sb.filter')}
             type="button"
           >
             <span className="material-symbols-outlined">tune</span>
-            <span>Filtrar</span>
+            <span>{t('sb.filter')}</span>
             {activeFilterCount > 0 && <span className="sb-filter-count">{activeFilterCount}</span>}
           </button>
         )}
@@ -298,7 +299,7 @@ export default function SourceBrowser({ source, siblings, onMangaSelect, onBack 
             className="sb-lang-select"
             value={activeSource.id}
             onChange={e => handleSiblingChange(e.target.value)}
-            title="Idioma da fonte"
+            title={t('sb.sourceLang')}
           >
             {siblingOptions.map(s => (
               <option key={s.id} value={s.id}>{(s.lang || '??').toUpperCase()}</option>
@@ -310,8 +311,8 @@ export default function SourceBrowser({ source, siblings, onMangaSelect, onBack 
       {supportsFilters && filterOpen && (
         <div className="sb-filter-panel">
           <div className="sb-filter-panel__head">
-            <span className="mono-cap mono-cap-shu">Filtros</span>
-            <span>{activeFilterCount} ativos</span>
+            <span className="mono-cap mono-cap-shu">{t('sb.filters')}</span>
+            <span>{activeFilterCount} {t('sb.active')}</span>
           </div>
           <div className="sb-filter-panel__body">
             {filterDefs.map(filter => (
@@ -326,7 +327,7 @@ export default function SourceBrowser({ source, siblings, onMangaSelect, onBack 
             {activeFilterCount > 0 && (
               <button className="sb-filter-clear" onClick={clearFilters} type="button">
                 <span className="material-symbols-outlined">filter_alt_off</span>
-                Limpar
+                {t('sb.clearFilters')}
               </button>
             )}
           </div>
@@ -463,8 +464,8 @@ function Pagination({ current, total, onGo }) {
   const pages = buildPageRange(current, total);
 
   return (
-    <nav className="sb-pagination" aria-label="Paginacao">
-      <button className="sb-page-btn" disabled={current === 1} onClick={() => onGo(current - 1)} title="Pagina anterior" type="button">
+    <nav className="sb-pagination" aria-label={t('sb.pagination')}>
+      <button className="sb-page-btn" disabled={current === 1} onClick={() => onGo(current - 1)} title={t('sb.prevPage')} type="button">
         <span className="material-symbols-outlined">chevron_left</span>
       </button>
 
@@ -483,7 +484,7 @@ function Pagination({ current, total, onGo }) {
         )
       )}
 
-      <button className="sb-page-btn" disabled={current === total} onClick={() => onGo(current + 1)} title="Proxima pagina" type="button">
+      <button className="sb-page-btn" disabled={current === total} onClick={() => onGo(current + 1)} title={t('sb.nextPage')} type="button">
         <span className="material-symbols-outlined">chevron_right</span>
       </button>
 
@@ -531,14 +532,14 @@ function BrowserHeader({
   return (
     <header className="sb-header">
       <div className="sb-header__top">
-        <button className="sb-back" onClick={onBack} title="Voltar" type="button">
+        <button className="sb-back" onClick={onBack} title={t('sb.back')} type="button">
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
 
         <div className="sb-source-mark" aria-hidden="true">{initial}</div>
 
         <div className="sb-header__info">
-          <p className="mono-cap mono-cap-shu">Fonte / {typeLabel}</p>
+          <p className="mono-cap mono-cap-shu">{t('sb.source')} / {typeLabel}</p>
           <div className="sb-header__title-row">
             <h2 className="sb-header__name">{source.name}</h2>
             <span className="sb-header__tag">{typeLabel}</span>
@@ -550,20 +551,20 @@ function BrowserHeader({
           <div className="sb-header__metrics">
             <div>
               <span>{shown}</span>
-              <small>na tela</small>
+              <small>{t('sb.onScreen')}</small>
             </div>
             <div>
               <span>{total || '-'}</span>
-              <small>total</small>
+              <small>{t('sb.total')}</small>
             </div>
             <div>
               <span>{page || 1}</span>
-              <small>pagina</small>
+              <small>{t('sb.page')}</small>
             </div>
             {mode && (
               <div>
                 <span>{mode}</span>
-                <small>modo</small>
+                <small>{t('sb.mode')}</small>
               </div>
             )}
           </div>
@@ -578,12 +579,12 @@ function BrowserHeader({
               <input
                 className="sb-search-input"
                 type="text"
-                placeholder={`Buscar em ${source.name}...`}
+                placeholder={`${t('sb.searchIn')} ${source.name}...`}
                 value={searchValue ?? ''}
                 onChange={onSearchChange}
               />
               {searchValue && (
-                <button className="sb-search-clear" onClick={onSearchClear} title="Limpar" type="button">
+                <button className="sb-search-clear" onClick={onSearchClear} title={t('sb.clear')} type="button">
                   <span className="material-symbols-outlined">close</span>
                 </button>
               )}
@@ -661,9 +662,9 @@ function getSourceHost(url) {
 
 function statusLabel(status) {
   return {
-    ongoing: 'Em andamento',
-    completed: 'Completo',
-    hiatus: 'Hiato',
-    cancelled: 'Cancelado',
+    ongoing: t('sb.st.ongoing'),
+    completed: t('sb.st.completed'),
+    hiatus: t('sb.st.hiatus'),
+    cancelled: t('sb.st.cancelled'),
   }[status] ?? status;
 }

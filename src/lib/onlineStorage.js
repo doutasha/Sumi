@@ -10,7 +10,12 @@ const STORAGE_KEYS = {
   CATEGORIES: 'online_reader_categories',
   SETTINGS: 'online_reader_settings',
   PROGRESS: 'sumi_reader_progress',
-  SOURCE_HEALTH: 'sumi_source_health'
+  SOURCE_HEALTH: 'sumi_source_health',
+  CHAPTER_SNAPSHOT: 'sumi_chapter_snapshot',
+  CHAPTER_COUNTS: 'sumi_chapter_counts',
+  CHAPTER_LISTS: 'sumi_chapter_lists',
+  UPDATES_SCOPE: 'sumi.updates.scope',
+  CHAPTER_UPDATES: 'sumi_chapter_updates',
 };
 
 const EXTENSION_STORAGE_KEYS = {
@@ -268,6 +273,114 @@ export function getDefaultOnlineSettings() {
     autoMarkAsRead: true,
     showOnlyFavorites: false
   };
+}
+
+// === SNAPSHOT DE CAPÍTULOS (aba Atualizações) ===
+// Mapa mangaKey -> array de ids de capítulo já vistos.
+export function getChapterSnapshot() {
+  const data = readJson(STORAGE_KEYS.CHAPTER_SNAPSHOT, null);
+  return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+}
+
+export function saveChapterSnapshot(map) {
+  return writeJson(STORAGE_KEYS.CHAPTER_SNAPSHOT, map || {});
+}
+
+// === TOTAIS DE CAPÍTULOS (badge + ordenação) ===
+// Preenchido ao abrir detalhes ou rodar Novidades; faltando = desconhecido.
+export function getChapterCounts() {
+  const data = readJson(STORAGE_KEYS.CHAPTER_COUNTS, null);
+  return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+}
+
+export function recordChapterCount(manga, total) {
+  try {
+    const key = getMangaStorageKey(manga);
+    if (!key || !Number.isFinite(Number(total))) return false;
+    const map = getChapterCounts();
+    map[key] = { total: Number(total), at: Date.now() };
+    return writeJson(STORAGE_KEYS.CHAPTER_COUNTS, map);
+  } catch {
+    return false;
+  }
+}
+
+// === LISTAS DE CAPÍTULOS (cache Mihon-style) ===
+// { [mangaKey]: { chapters: [...], fetchedAt } } — detalhe mostra na hora,
+// atualiza em fundo quando online.
+export function getCachedChapterList(manga) {
+  try {
+    const key = getMangaStorageKey(manga);
+    if (!key) return null;
+    const map = readJson(STORAGE_KEYS.CHAPTER_LISTS, null);
+    const entry = map && typeof map === 'object' ? map[key] : null;
+    return Array.isArray(entry?.chapters) ? entry : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveCachedChapterList(manga, chapters) {
+  try {
+    const key = getMangaStorageKey(manga);
+    if (!key || !Array.isArray(chapters)) return false;
+    const map = readJson(STORAGE_KEYS.CHAPTER_LISTS, null);
+    const next = map && typeof map === 'object' && !Array.isArray(map) ? map : {};
+    next[key] = { chapters, fetchedAt: Date.now() };
+    return writeJson(STORAGE_KEYS.CHAPTER_LISTS, next);
+  } catch {
+    return false;
+  }
+}
+
+// === FEED DE NOVIDADES (persiste até o usuário limpar) ===
+// [{ mangaKey, manga: {id, sourceId, title, coverUrl, sourceName},
+//    chapters: [{id, chapter, title}], foundAt }]
+export function getUpdateFeed() {
+  const data = readJson(STORAGE_KEYS.CHAPTER_UPDATES, null);
+  return Array.isArray(data) ? data : [];
+}
+
+export function saveUpdateFeed(feed) {
+  return writeJson(STORAGE_KEYS.CHAPTER_UPDATES, Array.isArray(feed) ? feed : []);
+}
+
+/** Mescla novidades (dedupe por capítulo). @returns feed atualizado */
+export function appendUpdateFeed(items) {
+  const feed = getUpdateFeed();
+  const byManga = new Map(feed.map((e) => [e.mangaKey, e]));
+  for (const item of items) {
+    const prev = byManga.get(item.mangaKey);
+    if (!prev) {
+      byManga.set(item.mangaKey, item);
+      continue;
+    }
+    const known = new Set(prev.chapters.map((c) => String(c.id)));
+    for (const ch of item.chapters) {
+      if (!known.has(String(ch.id))) {
+        known.add(String(ch.id));
+        prev.chapters.push(ch);
+      }
+    }
+    prev.foundAt = Math.max(prev.foundAt || 0, item.foundAt || 0);
+  }
+  const next = [...byManga.values()];
+  saveUpdateFeed(next);
+  return next;
+}
+
+export function clearUpdateFeed() {
+  return writeJson(STORAGE_KEYS.CHAPTER_UPDATES, []);
+}
+
+// === ESCOPO DA ABA NOVIDADES ===
+export function getUpdatesScope() {
+  const v = readJson(STORAGE_KEYS.UPDATES_SCOPE, null);
+  return v && typeof v === 'object' ? v : { kind: 'all', id: null };
+}
+
+export function saveUpdatesScope(scope) {
+  return writeJson(STORAGE_KEYS.UPDATES_SCOPE, scope && typeof scope === 'object' ? scope : { kind: 'all', id: null });
 }
 
 // === READING PROGRESS ===

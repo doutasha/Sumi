@@ -16,6 +16,7 @@ import {
 import { refreshServerSources, getExtensionSources } from '../lib/parser/sources.js';
 import { refreshServerExtensions } from '../lib/parser/extensions.js';
 import { clearServerSourceCache } from '../lib/sourceRegistry.js';
+import { t } from '../lib/i18n.js';
 import { toast } from './Toast.jsx';
 import {
   checkSourceCompatibility,
@@ -44,25 +45,25 @@ const LANG_LABELS = {
 };
 
 const TABS = [
-  { id: 'installed', label: 'Instaladas', icon: 'download_done' },
-  { id: 'browse', label: 'Catálogo', icon: 'store' },
-  { id: 'updates', label: 'Atualizações', icon: 'update' },
+  { id: 'installed', labelKey: 'ext.tabInstalled', icon: 'download_done' },
+  { id: 'browse', labelKey: 'ext.tabBrowse', icon: 'store' },
+  { id: 'updates', labelKey: 'ext.tabUpdates', icon: 'update' },
 ];
 
 const HEALTH_META = {
-  checking: { label: 'Testando', icon: 'progress_activity' },
-  untested: { label: 'Nao testada', icon: 'help' },
-  [SOURCE_HEALTH_STATUS.COMPATIBLE]: { label: 'Compativel', icon: 'verified' },
-  [SOURCE_HEALTH_STATUS.PARTIAL]: { label: 'Parcial', icon: 'rule' },
-  [SOURCE_HEALTH_STATUS.FAILING]: { label: 'Falhando', icon: 'warning' },
-  [SOURCE_HEALTH_STATUS.UNSUPPORTED]: { label: 'Nao suportada', icon: 'extension_off' },
+  checking: { labelKey: 'ext.hChecking', icon: 'progress_activity' },
+  untested: { labelKey: 'ext.hUntested', icon: 'help' },
+  [SOURCE_HEALTH_STATUS.COMPATIBLE]: { labelKey: 'ext.hCompatible', icon: 'verified' },
+  [SOURCE_HEALTH_STATUS.PARTIAL]: { labelKey: 'ext.hPartial', icon: 'rule' },
+  [SOURCE_HEALTH_STATUS.FAILING]: { labelKey: 'ext.hFailing', icon: 'warning' },
+  [SOURCE_HEALTH_STATUS.UNSUPPORTED]: { labelKey: 'ext.hUnsupported', icon: 'extension_off' },
 };
 
 const HEALTH_STEPS = [
-  { key: 'browse', label: 'Mangas' },
-  { key: 'details', label: 'Detalhes' },
-  { key: 'chapters', label: 'Capitulos' },
-  { key: 'pages', label: 'Leitura' },
+  { key: 'browse', labelKey: 'ext.sBrowse' },
+  { key: 'details', labelKey: 'ext.sDetails' },
+  { key: 'chapters', labelKey: 'ext.sChapters' },
+  { key: 'pages', labelKey: 'ext.sPages' },
 ];
 
 function healthRank(health) {
@@ -79,7 +80,7 @@ function healthRank(health) {
 function checkedAtLabel(timestamp) {
   if (!timestamp) return '';
   const minutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
-  if (minutes < 1) return 'agora';
+  if (minutes < 1) return t('ext.now');
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.round(minutes / 60);
   if (hours < 48) return `${hours}h`;
@@ -158,7 +159,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       setInstalled(getInstalledExtensions());
       onExtensionsChange?.();
     } catch (err) {
-      toast(`Falha ao instalar ${ext.name}: ${err.message}`, 'error');
+      toast(`${t('ext.failInstall')} ${ext.name}: ${err.message}`, 'error');
     } finally {
       setInstalling(prev => {
         const next = new Set(prev);
@@ -185,7 +186,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       setUpdatesAvailable(prev => prev.filter(id => id !== extId));
       onExtensionsChange?.();
     } catch (err) {
-      toast(`Falha ao atualizar: ${err.message}`, 'error');
+      toast(`${t('ext.failUpdate')}: ${err.message}`, 'error');
     } finally {
       setInstalling(prev => {
         const next = new Set(prev);
@@ -207,7 +208,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       await checkSourceCompatibility(source);
       setHealthStore(getSourceHealthStore());
     } catch (err) {
-      toast(`Falha ao testar ${source.name}: ${err.message}`, 'error');
+      toast(`${t('ext.failTest')} ${source.name}: ${err.message}`, 'error');
     } finally {
       setCheckingSources(prev => {
         const next = new Set(prev);
@@ -259,37 +260,40 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
 
   const installedCount = Object.keys(installed).length;
   const updatesCount = updatesAvailable.length;
-  const tabItems = TABS.map(tab => ({
-    ...tab,
-    label: tab.id === 'updates' && updatesCount > 0 ? `${tab.label} (${updatesCount})` : tab.label,
-  }));
+  const tabItems = TABS.map(tab => {
+    const base = t(tab.labelKey);
+    return {
+      ...tab,
+      label: tab.id === 'updates' && updatesCount > 0 ? `${base} (${updatesCount})` : base,
+    };
+  });
 
   return (
     <div className="ext-manager">
       <section className="ext-manager__hero">
         <div>
-          <p className="mono-cap mono-cap-shu">Keiyoushi / repositório</p>
+          <p className="mono-cap mono-cap-shu">{t('ext.heroKicker')}</p>
           <div className="ext-manager__title-row">
-            <h2 className="ext-manager__title">Extensões</h2>
+            <h2 className="ext-manager__title">{t('ext.heroTitle')}</h2>
             <span className="ext-manager__jp">拡張</span>
           </div>
           <p className="ext-manager__subtitle">
-            Instale fontes, atualize parsers e navegue por cada repositório instalado.
+            {t('ext.heroSub')}
           </p>
         </div>
 
         <div className="ext-manager__stats">
           <div>
             <span className="ext-manager__stat-value">{installedCount}</span>
-            <span className="ext-manager__stat-label">instaladas</span>
+            <span className="ext-manager__stat-label">{t('ext.stInstalled')}</span>
           </div>
           <div>
             <span className="ext-manager__stat-value">{catalog.length || '-'}</span>
-            <span className="ext-manager__stat-label">catálogo</span>
+            <span className="ext-manager__stat-label">{t('ext.stCatalog')}</span>
           </div>
           <div>
             <span className="ext-manager__stat-value">{updatesCount}</span>
-            <span className="ext-manager__stat-label">pendentes</span>
+            <span className="ext-manager__stat-label">{t('ext.stPending')}</span>
           </div>
         </div>
       </section>
@@ -313,7 +317,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
             <span className="material-symbols-outlined">search</span>
             <input
               type="text"
-              placeholder="Buscar extensão..."
+              placeholder={t('ext.searchPh')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
@@ -321,7 +325,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
               <button
                 className="ext-manager__search-clear"
                 onClick={() => setSearchQuery('')}
-                title="Limpar busca"
+                title={t('ext.clearSearch')}
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -333,11 +337,11 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
               <select
                 value={filterLang}
                 onChange={e => setFilterLang(e.target.value)}
-                aria-label="Filtrar por idioma"
+                aria-label={t('ext.filterLang')}
               >
                 {availableLangs.map(lang => (
                   <option key={lang} value={lang}>
-                    {lang === 'all' ? 'Todos os idiomas' : (LANG_LABELS[lang] || lang.toUpperCase())}
+                    {lang === 'all' ? t('ext.allLangs') : (LANG_LABELS[lang] || lang.toUpperCase())}
                   </option>
                 ))}
               </select>
@@ -350,7 +354,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
         <div className="ext-manager__error">
           <span className="material-symbols-outlined">error</span>
           <p>{error}</p>
-          <button onClick={() => loadCatalog(true)}>Tentar novamente</button>
+          <button onClick={() => loadCatalog(true)}>{t('ext.retry')}</button>
         </div>
       )}
 
@@ -360,9 +364,9 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
             {installedList.length === 0 && builtInList.length === 0 ? (
               <div className="ext-manager__empty">
                 <span className="material-symbols-outlined">extension_off</span>
-                <p>Nenhuma extensão instalada</p>
+                <p>{t('ext.emptyInstalled')}</p>
                 <p className="ext-manager__empty-hint">
-                  Abra o <strong>Catálogo</strong> para instalar novas fontes.
+                  {t('ext.emptyInstalledHintA')} <strong>{t('ext.emptyInstalledHintB')}</strong> {t('ext.emptyInstalledHintC')}
                 </p>
               </div>
             ) : (
@@ -408,16 +412,16 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
             {loading ? (
               <div className="ext-manager__loading">
                 <div className="spinner" />
-                <p>Carregando catálogo do motor...</p>
+                <p>{t('ext.loadingCatalog')}</p>
               </div>
             ) : (
               <>
                 <div className="ext-manager__count">
-                  <span>{availableList.length} extensões disponíveis</span>
+                  <span>{availableList.length} {t('ext.available')}</span>
                   <button
                     className="ext-manager__refresh"
                     onClick={() => loadCatalog(true)}
-                    title="Atualizar catálogo"
+                    title={t('ext.refreshCatalog')}
                   >
                     <span className="material-symbols-outlined">refresh</span>
                   </button>
@@ -443,7 +447,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
             {updatesList.length === 0 ? (
               <div className="ext-manager__empty">
                 <span className="material-symbols-outlined">check_circle</span>
-                <p>Todas as extensões estão atualizadas</p>
+                <p>{t('ext.allUpdated')}</p>
               </div>
             ) : (
               <>
@@ -456,7 +460,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
                   }}
                 >
                   <span className="material-symbols-outlined">system_update</span>
-                  Atualizar todas ({updatesList.length})
+                  {t('ext.updateAll')} ({updatesList.length})
                 </button>
                 <div className="ext-list">
                   {updatesList.map(ext => (
@@ -478,8 +482,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
       <div className="ext-manager__info">
         <span className="material-symbols-outlined">info</span>
         <p>
-          As extensões rodam no <strong>motor local</strong> (APKs reais, compat total).
-          Navegar e testar acontece por <strong>fonte</strong>, na Busca — aqui é só gestão.
+          {t('ext.infoA')}<strong>{t('ext.infoB')}</strong>{t('ext.infoC')}<strong>{t('ext.infoD')}</strong>{t('ext.infoE')}
         </p>
       </div>
 
@@ -487,14 +490,14 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
         <div className="modal-overlay" onClick={() => setPendingUninstall(null)}>
           <div className="modal modal--small" onClick={e => e.stopPropagation()}>
             <div className="modal__header">
-              <h2>Desinstalar extensão</h2>
+              <h2>{t('ext.uninstallTitle')}</h2>
               <button className="modal__close" onClick={() => setPendingUninstall(null)}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             <div className="modal__body">
               <p style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                Remover <strong>{pendingUninstall.name}</strong> das extensões instaladas?
+                {t('ext.uninstallBodyA')} <strong>{pendingUninstall.name}</strong> {t('ext.uninstallBodyB')}
               </p>
             </div>
             <div className="modal__footer">
@@ -502,7 +505,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
                 className="modal__btn modal__btn--secondary"
                 onClick={() => setPendingUninstall(null)}
               >
-                Cancelar
+                {t('ext.cancel')}
               </button>
               <button
                 className="modal__btn modal__btn--danger"
@@ -512,7 +515,7 @@ export default function ExtensionManager({ onExtensionsChange, onBrowseSource })
                 }}
               >
                 <span className="material-symbols-outlined">delete</span>
-                Desinstalar
+                {t('ext.uninstall')}
               </button>
             </div>
           </div>
@@ -554,7 +557,7 @@ function ExtensionCard({
         <div className="ext-card__name-row">
           <h3 className="ext-card__name">{ext.name}</h3>
           {ext.native ? (
-            <span className="ext-card__update-badge">NATIVA</span>
+            <span className="ext-card__update-badge">{t('ext.native')}</span>
           ) : (
             <span className="ext-card__lang">{(ext.lang || 'en').toUpperCase()}</span>
           )}
@@ -565,7 +568,7 @@ function ExtensionCard({
         {ext.url && !ext.baseUrl && <p className="ext-card__url">{ext.url}</p>}
 
         {ext.version && <span className="ext-card__multisrc">v{ext.version}</span>}
-        {isBuiltIn && ext.native && <span className="ext-card__multisrc">Fonte nativa</span>}
+        {isBuiltIn && ext.native && <span className="ext-card__multisrc">{t('ext.nativeSource')}</span>}
         {status !== 'available' && health?.status && (
           <SourceHealth health={health} isChecking={isChecking} />
         )}
@@ -577,14 +580,14 @@ function ExtensionCard({
             className="ext-card__btn ext-card__btn--check"
             onClick={onCheck}
             disabled={isChecking}
-            title="Testar mangas, detalhes, capitulos e leitura"
+            title={t('ext.testTitle')}
           >
             {isChecking ? (
               <div className="spinner spinner--small" />
             ) : (
               <span className="material-symbols-outlined">science</span>
             )}
-            Testar
+            {t('ext.test')}
           </button>
         )}
 
@@ -592,10 +595,10 @@ function ExtensionCard({
           <button
             className={`ext-card__btn ${browseUnsupported ? 'ext-card__btn--status' : 'ext-card__btn--browse'}`}
             onClick={onBrowse}
-            title={browseUnsupported ? 'Ver status do suporte' : 'Navegar'}
+            title={browseUnsupported ? t('ext.supportStatus') : t('ext.browse')}
           >
             <span className="material-symbols-outlined">{browseUnsupported ? 'info' : 'explore'}</span>
-            {browseUnsupported ? 'Status' : 'Navegar'}
+            {browseUnsupported ? t('ext.status') : t('ext.browse')}
           </button>
         )}
 
@@ -604,10 +607,10 @@ function ExtensionCard({
             type="button"
             className="ext-card__btn ext-card__btn--browse"
             onClick={() => onBrowseSource?.()}
-            title="Navegar"
+            title={t('ext.browse')}
           >
             <span className="material-symbols-outlined">explore</span>
-            Navegar
+            {t('ext.browse')}
           </button>
         )}
 
@@ -618,9 +621,9 @@ function ExtensionCard({
             disabled={isInstalling}
           >
             {isInstalling ? (
-              <><div className="spinner spinner--small" /> Instalando...</>
+              <><div className="spinner spinner--small" /> {t('ext.installing')}</>
             ) : (
-              <><span className="material-symbols-outlined">download</span> Instalar</>
+              <><span className="material-symbols-outlined">download</span> {t('ext.install')}</>
             )}
           </button>
         )}
@@ -630,10 +633,10 @@ function ExtensionCard({
             {hasUpdate && (
               <button
                 className="ext-card__btn ext-card__btn--update"
-                onClick={onUpdate}
-                disabled={isUpdating}
-                title="Atualizar"
-              >
+              onClick={onUpdate}
+              disabled={isUpdating}
+              title={t('ext.update')}
+            >
                 {isUpdating ? (
                   <div className="spinner spinner--small" />
                 ) : (
@@ -644,7 +647,7 @@ function ExtensionCard({
             <button
               className="ext-card__btn ext-card__btn--toggle"
               onClick={onToggle}
-              title={ext.enabled ? 'Desativar' : 'Ativar'}
+              title={ext.enabled ? t('ext.disable') : t('ext.enable')}
             >
               <span className="material-symbols-outlined">
                 {ext.enabled !== false ? 'toggle_on' : 'toggle_off'}
@@ -653,7 +656,7 @@ function ExtensionCard({
             <button
               className="ext-card__btn ext-card__btn--uninstall"
               onClick={onUninstall}
-              title="Desinstalar"
+              title={t('ext.uninstall')}
             >
               <span className="material-symbols-outlined">delete</span>
             </button>
@@ -667,9 +670,9 @@ function ExtensionCard({
             disabled={isUpdating}
           >
             {isUpdating ? (
-              <><div className="spinner spinner--small" /> Atualizando...</>
+              <><div className="spinner spinner--small" /> {t('ext.updating')}</>
             ) : (
-              <><span className="material-symbols-outlined">update</span> Atualizar</>
+              <><span className="material-symbols-outlined">update</span> {t('ext.update')}</>
             )}
           </button>
         )}
@@ -683,14 +686,14 @@ function SourceHealth({ health, isChecking }) {
   const meta = HEALTH_META[status] || HEALTH_META.untested;
   const lastChecked = checkedAtLabel(health?.checkedAt);
   const title = health?.sample?.mangaTitle
-    ? `Ultimo teste: ${health.sample.mangaTitle}`
-    : meta.label;
+    ? `${t('ext.lastTest')}: ${health.sample.mangaTitle}`
+    : t(meta.labelKey);
 
   return (
     <div className={`ext-card__health ext-card__health--${status}`} title={title}>
       <span className="ext-card__health-status">
         <span className="material-symbols-outlined">{meta.icon}</span>
-        {meta.label}
+        {t(meta.labelKey)}
         {lastChecked && <small>{lastChecked}</small>}
       </span>
 
@@ -700,11 +703,11 @@ function SourceHealth({ health, isChecking }) {
             const result = health.steps[step.key];
             const state = result ? (result.ok ? 'ok' : 'fail') : 'idle';
             const stepTitle = result?.error
-              ? `${step.label}: ${result.error}`
-              : step.label;
+              ? `${t(step.labelKey)}: ${result.error}`
+              : t(step.labelKey);
             return (
               <span key={step.key} className={`ext-card__health-step ${state}`} title={stepTitle}>
-                {step.label.slice(0, 3)}
+                {t(step.labelKey).slice(0, 3)}
               </span>
             );
           })}

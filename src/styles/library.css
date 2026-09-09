@@ -12,6 +12,56 @@
   height: auto;
 }
 
+/* Troca de categoria: fade + deslize rápido. `key` por categoria re-dispara. */
+.lib-fade {
+  animation: lib-fade 0.22s ease-out;
+}
+
+@keyframes lib-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lib-fade {
+    animation: none;
+  }
+}
+
+/* Arrastar para a categoria: origem some um pouco, destino acende. */
+.online-manga-card--dragging {
+  opacity: 0.45;
+}
+
+.online-library__category--droptarget {
+  border-color: var(--shu) !important;
+  color: var(--paper-0) !important;
+}
+
+/* Barra de filtro + ordem da estante. */
+.online-library__toolbar {
+  display: grid;
+  gap: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  background: var(--ink-1);
+  border: 1px solid var(--ink-4);
+  margin-bottom: 14px;
+}
+
+.online-library__toolbar .ext-manager__search {
+  border-right: 1px solid var(--ink-4);
+}
+
+.online-library__toolbar .ext-manager__lang-filter select {
+  min-width: 150px;
+}
+
 .online-library__sidebar {
   background: var(--ink-1);
   border: 1px solid var(--ink-4);
@@ -307,6 +357,22 @@
   background: var(--shu);
   display: block;
   height: 100%;
+}
+
+/* Total de capítulos: chip semitransparente no canto da capa. */
+.online-manga-card__count {
+  background: rgba(0, 0, 0, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--paper-0);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 700;
+  left: 6px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  position: absolute;
+  top: 6px;
+  z-index: 3;
 }
 
 .online-manga-card__cover:hover .online-manga-card__overlay,

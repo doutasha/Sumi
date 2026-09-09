@@ -8,23 +8,26 @@ import { checkForUpdates } from '../../desktop/frontend-integration/updater.js';
 import Tour from './Tour.jsx';
 import { ToastHost } from './Toast.jsx';
 import { tourSteps, TOUR_START_EVENT } from '../lib/tour.js';
+import { t, LOCALE_EVENT } from '../lib/i18n.js';
 import OnlineLibrary from './OnlineLibrary.jsx';
 import SourceBrowser from './SourceBrowser.jsx';
 import MangaDetailPage from './MangaDetailPage.jsx';
 import ChapterReader from './ChapterReader.jsx';
 import OnlineSearch from './OnlineSearch.jsx';
+import OnlineUpdates from './OnlineUpdates.jsx';
 import ExtensionManager from './ExtensionManager.jsx';
 import SettingsScreen from './SettingsScreen.jsx';
 import OnlineHistory from './OnlineHistory.jsx';
 import OnlineBackup from './OnlineBackup.jsx';
 
 const MAIN_VIEWS = [
-  { id: 'library', icon: 'local_library', kanji: '\u672c', label: 'Biblioteca', title: 'Biblioteca', jp: '\u672c\u68da' },
-  { id: 'history', icon: 'history', kanji: '\u8a18', label: 'Hist\u00f3rico', title: 'Hist\u00f3rico', jp: '\u5c65\u6b74' },
-  { id: 'backup', icon: 'backup', kanji: '\u4fdd', label: 'Backup', title: 'Backup', jp: '\u4fdd\u5b58' },
-  { id: 'extensions', icon: 'extension', kanji: '\u62e1', label: 'Extens\u00f5es', title: 'Extens\u00f5es', jp: '\u62e1\u5f35' },
-  { id: 'search', icon: 'travel_explore', kanji: '\u7d22', label: 'Busca', title: 'Busca global', jp: '\u691c\u7d22' },
-  { id: 'settings', icon: 'settings', kanji: '\u8a2d', label: 'Config', title: 'Configurações', jp: '\u8a2d\u5b9a' },
+  { id: 'library', icon: 'local_library', kanji: '\u672c', labelKey: 'nav.library', titleKey: 'nav.libraryTitle', jp: '\u672c\u68da' },
+  { id: 'history', icon: 'history', kanji: '\u8a18', labelKey: 'nav.history', titleKey: 'nav.historyTitle', jp: '\u5c65\u6b74' },
+  { id: 'backup', icon: 'backup', kanji: '\u4fdd', labelKey: 'nav.backup', titleKey: 'nav.backupTitle', jp: '\u4fdd\u5b58' },
+  { id: 'extensions', icon: 'extension', kanji: '\u62e1', labelKey: 'nav.extensions', titleKey: 'nav.extensionsTitle', jp: '\u62e1\u5f35' },
+  { id: 'search', icon: 'travel_explore', kanji: '\u7d22', labelKey: 'nav.search', titleKey: 'nav.searchTitle', jp: '\u691c\u7d22' },
+  { id: 'updates', icon: 'update', kanji: '\u65b0', labelKey: 'nav.updates', titleKey: 'nav.updatesTitle', jp: '\u66f4\u65b0' },
+  { id: 'settings', icon: 'settings', kanji: '\u8a2d', labelKey: 'nav.settings', titleKey: 'nav.settingsTitle', jp: '\u8a2d\u5b9a' },
 ];
 
 function parseChapterNumber(chapter) {
@@ -83,6 +86,13 @@ export default function OnlineReader({ startTour = false }) {
   const [navStack, setNavStack] = useState([]);
   const [pendingUpdate, setPendingUpdate] = useState(null);
   const [tourActive, setTourActive] = useState(false);
+  // Idioma: re-render global imediato (sidebar + view juntos).
+  const [, setLocaleTick] = useState(0);
+  useEffect(() => {
+    const onLocale = () => setLocaleTick((n) => n + 1);
+    window.addEventListener(LOCALE_EVENT, onLocale);
+    return () => window.removeEventListener(LOCALE_EVENT, onLocale);
+  }, []);
 
   useEffect(() => { loadData(); }, []);
 
@@ -179,6 +189,7 @@ export default function OnlineReader({ startTour = false }) {
               manga={top.manga}
               onChapterSelect={(ch, manga, chapters) => openChapter(ch, manga, chapters)}
               onBack={popNav}
+              onDataChange={loadData}
             />
           </main>
         </div>
@@ -230,7 +241,7 @@ export default function OnlineReader({ startTour = false }) {
             >
               <span className="sumi-nav__kanji">{view.kanji}</span>
               <span className="material-symbols-outlined">{view.icon}</span>
-              <span>{view.label}</span>
+              <span>{t(view.labelKey)}</span>
             </button>
           ))}
         </nav>
@@ -243,9 +254,9 @@ export default function OnlineReader({ startTour = false }) {
       <div className="sumi-content">
         <header className="sumi-topbar">
           <div>
-            <p className="mono-cap mono-cap-shu">SUMI / {activeMeta.label}</p>
+            <p className="mono-cap mono-cap-shu">SUMI / {t(activeMeta.labelKey)}</p>
             <div className="sumi-topbar__title-row">
-              <h1 className="sumi-topbar__title">{activeMeta.title}</h1>
+              <h1 className="sumi-topbar__title">{t(activeMeta.titleKey)}</h1>
               <span className="sumi-topbar__jp">{activeMeta.jp}</span>
             </div>
           </div>
@@ -311,6 +322,10 @@ export default function OnlineReader({ startTour = false }) {
 
           {activeView === 'search' && (
             <OnlineSearch sources={sources} onMangaSelect={openManga} />
+          )}
+
+          {activeView === 'updates' && (
+            <OnlineUpdates favorites={favorites} onMangaOpen={openManga} />
           )}
 
           {activeView === 'settings' && (

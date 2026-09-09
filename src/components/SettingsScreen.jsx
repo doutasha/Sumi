@@ -114,7 +114,7 @@ export default function SettingsScreen() {
     const status = await checkHealth(next).catch((err) => ({ online: false, message: err.message }));
     setHealth(status);
     await loadRepos(next);
-    flash(status.online ? 'Motor conectado.' : `Motor inalcançável: ${status.message ?? status.code}`, !status.online);
+    flash(status.online ? t('cfg.engineConnected') : `${t('cfg.engineUnreachable')} ${status.message ?? status.code}`, !status.online);
   };
 
   const handleToggleEngine = async () => {
@@ -167,7 +167,7 @@ export default function SettingsScreen() {
       });
       setDlProgress(null);
       await refreshSidecar();
-      flash(res?.cached ? 'Motor já estava baixado.' : `Motor baixado (${res?.javaVersion ?? 'java ok'}).`);
+      flash(res?.cached ? t('cfg.engineCached') : `${t('cfg.engineDownloaded')} (${res?.javaVersion ?? 'java ok'}).`);
     } catch (err) {
       setDlProgress(null);
       flash(String(err?.message ?? err), true);
@@ -186,9 +186,7 @@ export default function SettingsScreen() {
         await sidecarStart();
       }
       await refreshSidecar();
-      flash(next
-        ? 'WebView ligado. O Chromium (~260MB) baixa sozinho no primeiro site com Cloudflare.'
-        : 'WebView desligado.');
+      flash(next ? t('cfg.kcefEnabledMsg') : t('cfg.kcefDisabledMsg'));
     } catch (err) {
       flash(String(err?.message ?? err), true);
     } finally {
@@ -201,7 +199,7 @@ export default function SettingsScreen() {
     try {
       const info = await checkForUpdates();
       setUpdateInfo(info);
-      flash(info ? `Nova versão disponível: v${info.version}.` : 'Sumi já está atualizado.');
+      flash(info ? `${t('cfg.updateAvailable')} v${info.version}.` : t('cfg.upToDate'));
     } catch (err) {
       flash(String(err?.message ?? err), true);
     } finally {
@@ -216,7 +214,7 @@ export default function SettingsScreen() {
       const res = await installUpdate({ onProgress: (ev) => setUpProgress(ev) });
       setUpProgress(null);
       if (!res?.updated) {
-        flash('Sumi já está atualizado.');
+        flash(t('cfg.upToDate'));
         setUpdateInfo(null);
       }
       // Se atualizou, o instalador reinicia o app sozinho (Windows).
@@ -230,10 +228,10 @@ export default function SettingsScreen() {
 
   const upLabel = () => {
     if (!upProgress) return null;
-    if (upProgress.phase === 'install') return 'Instalando… o app vai reiniciar.';
+    if (upProgress.phase === 'install') return t('cfg.installingRestart');
     const { received = 0, total = 0 } = upProgress;
-    if (!total) return `Baixando… (${(received / 1048576).toFixed(0)}MB)`;
-    return `Baixando… ${Math.round((received / total) * 100)}% (${(received / 1048576).toFixed(0)}/${(total / 1048576).toFixed(0)}MB)`;
+    if (!total) return `${t('cfg.downloading')}… (${(received / 1048576).toFixed(0)}MB)`;
+    return `${t('cfg.downloading')}… ${Math.round((received / total) * 100)}% (${(received / 1048576).toFixed(0)}/${(total / 1048576).toFixed(0)}MB)`;
   };
 
   const handleClearCaches = async () => {
@@ -242,7 +240,7 @@ export default function SettingsScreen() {
       const res = await clearCaches();
       await loadRepos();
       setHealth(await checkHealth().catch((err) => ({ online: false, message: err.message })));
-      flash(`Cache limpo (${res.frontendKeys} locais${res.serverImages ? ' + capas do motor' : ''}).`);
+      flash(`${t('cfg.cacheCleaned')} (${res.frontendKeys} ${t('cfg.cacheLocal')}${res.serverImages ? ` + ${t('cfg.cacheCovers')}` : ''}).`);
     } catch (err) {
       flash(String(err?.message ?? err), true);
     } finally {
@@ -265,7 +263,7 @@ export default function SettingsScreen() {
     setMaintBusy(true);
     try {
       const res = await wipeAllAppData();
-      flash(`Tudo apagado (${formatBytes(res?.freedBytes)}). Reiniciando zerado…`);
+      flash(`${t('cfg.wiped')} (${formatBytes(res?.freedBytes)})`);
       window.setTimeout(() => window.location.reload(), 1200);
     } catch (err) {
       flash(String(err?.message ?? err), true);
@@ -284,12 +282,12 @@ export default function SettingsScreen() {
   const dlLabel = () => {
     if (!dlProgress) return null;
     const { phase, received = 0, total = 0 } = dlProgress;
-    if (phase === 'done') return 'Concluído.';
-    if (phase === 'extract') return `Extraindo JRE… (${received}/${total} arquivos)`;
+    if (phase === 'done') return t('cfg.done');
+    if (phase === 'extract') return `${t('cfg.extracting')} (${received}/${total})`;
     const pct = total > 0 ? Math.round((received / total) * 100) : 0;
     const mb = (v) => `${(v / 1048576).toFixed(0)}MB`;
     const name = phase === 'jar' ? 'JAR' : 'JRE';
-    return `Baixando ${name}… ${pct}% (${mb(received)}/${mb(total)})`;
+    return `${t('cfg.downloading')} ${name}… ${pct}% (${mb(received)}/${mb(total)})`;
   };
 
   const syncAfterRepoChange = async (cfg = config) => {
@@ -306,11 +304,11 @@ export default function SettingsScreen() {
   const handleAddRepo = async () => {
     const indexUrl = repoInput.trim();
     if (!/^https?:\/\/.+/i.test(indexUrl)) {
-      flash('Cole um link http(s) válido para o index.json do repositório.', true);
+      flash(t('cfg.invalidRepoUrl'), true);
       return;
     }
     if (repos.some((repo) => repo.indexUrl === indexUrl)) {
-      flash('Este repositório já está adicionado.', true);
+      flash(t('cfg.repoExists'), true);
       return;
     }
     setBusy(true);
@@ -318,9 +316,9 @@ export default function SettingsScreen() {
       await addExtensionRepo(indexUrl);
       setRepoInput('');
       await syncAfterRepoChange();
-      flash('Repositório adicionado.');
+      flash(t('cfg.repoAdded'));
     } catch (err) {
-      flash(`Falha ao adicionar: ${err.message}`, true);
+      flash(`${t('cfg.repoAddFail')}: ${err.message}`, true);
     } finally {
       setBusy(false);
     }
@@ -331,9 +329,9 @@ export default function SettingsScreen() {
     try {
       await removeRepo(indexUrl);
       await syncAfterRepoChange();
-      flash('Repositório removido.');
+      flash(t('cfg.repoRemoved'));
     } catch (err) {
-      flash(`Falha ao remover: ${err.message}`, true);
+      flash(`${t('cfg.repoRemoveFail')}: ${err.message}`, true);
     } finally {
       setBusy(false);
     }
@@ -342,19 +340,19 @@ export default function SettingsScreen() {
   return (
     <div className="ext-manager">
       <section className="ext-manager__hero">
-        <div>
-          <p className="mono-cap mono-cap-shu">Sumi / ajustes</p>
-          <div className="ext-manager__title-row">
-            <h2 className="ext-manager__title">Configurações</h2>
-            <span className="ext-manager__jp">設定</span>
-          </div>
-          <p className="ext-manager__subtitle">
-            Motor local, repositórios de extensões e biblioteca.
-          </p>
-          <p className="cfg-note">
-            Motor <strong>Suwayomi-Server</strong> · extensões compatíveis com
-            <strong> Keiyoushi/Mihon</strong> · Sumi sem conteúdo embutido.
-          </p>
+          <div>
+            <p className="mono-cap mono-cap-shu">{t('cfg.kicker')}</p>
+            <div className="ext-manager__title-row">
+              <h2 className="ext-manager__title">{t('cfg.title')}</h2>
+              <span className="ext-manager__jp">設定</span>
+            </div>
+            <p className="ext-manager__subtitle">
+              {t('cfg.subtitle')}
+            </p>
+            <p className="cfg-note">
+              {t('cfg.creditsA')} <strong>Suwayomi-Server</strong> · {t('cfg.creditsB')}
+              <strong> Keiyoushi/Mihon</strong> · {t('cfg.creditsC')}
+            </p>
           <p className="cfg-note">
             <button
               className="online-backup__button"
@@ -370,11 +368,11 @@ export default function SettingsScreen() {
         <div className="ext-manager__stats">
           <div>
             <span className="ext-manager__stat-value">{health?.online ? health.sourceCount ?? '–' : '–'}</span>
-            <span className="ext-manager__stat-label">fontes no motor</span>
+            <span className="ext-manager__stat-label">{t('cfg.sourcesOnEngine')}</span>
           </div>
           <div>
             <span className="ext-manager__stat-value">{repos.length}</span>
-            <span className="ext-manager__stat-label">repositórios</span>
+            <span className="ext-manager__stat-label">{t('cfg.repos')}</span>
           </div>
         </div>
       </section>
@@ -394,7 +392,7 @@ export default function SettingsScreen() {
       <Section
         id="motor"
         num={numOf('motor')}
-        title="Motor local"
+        title={t('cfg.secMotor')}
         hint={health?.online ? `${health.sourceCount ?? '–'} fontes` : 'offline'}
         hintTone={health?.online ? 'ok' : 'warn'}
         open={openSection === 'motor'}
@@ -408,19 +406,19 @@ export default function SettingsScreen() {
             value={baseUrlInput}
             onChange={(e) => setBaseUrlInput(e.target.value)}
             placeholder="http://127.0.0.1:4567"
-            aria-label="Endereço do motor"
+            aria-label={t('cfg.addrLabel')}
           />
         </div>
         <div className="cfg-row">
-          <span className="cfg-row__label">Conexão com o motor<small>Salva o endereço e testa na hora.</small></span>
+          <span className="cfg-row__label">{t('cfg.connLabel')}<small>{t('cfg.connHint')}</small></span>
           <span className="cfg-row__actions">
-            <button className="online-backup__button" onClick={handleSaveEngine} title="Salvar e testar">
+            <button className="online-backup__button" onClick={handleSaveEngine} title={t('cfg.saveTest')}>
               <span className="material-symbols-outlined">save</span>
-              Salvar
+              {t('cfg.save')}
             </button>
-            <button className="online-backup__button" onClick={handleToggleEngine} title={config.enabled ? 'Desligar motor (modo leve)' : 'Ligar motor'}>
+            <button className="online-backup__button" onClick={handleToggleEngine} title={config.enabled ? t('cfg.turnOff') : t('cfg.turnOn')}>
               <span className="material-symbols-outlined">{config.enabled ? 'toggle_on' : 'toggle_off'}</span>
-              {config.enabled ? 'Ligado' : 'Leve'}
+              {config.enabled ? t('cfg.engineOn') : t('cfg.engineLight')}
             </button>
           </span>
         </div>
@@ -430,52 +428,52 @@ export default function SettingsScreen() {
         <Section
           id="sidecar"
           num={numOf('sidecar')}
-          title="Motor embutido"
-          hint={sidecar?.running ? `PID ${sidecar.info?.pid}` : sidecar?.needsDownload ? 'baixar' : 'parado'}
+          title={t('cfg.secSidecar')}
+          hint={sidecar?.running ? `${t('cfg.scHintRunning')} ${sidecar.info?.pid}` : sidecar?.needsDownload ? t('cfg.scHintDownload') : t('cfg.scHintStopped')}
           hintTone={sidecar?.running ? 'ok' : 'warn'}
           open={openSection === 'sidecar'}
           onToggle={() => toggleSection('sidecar')}
         >
           <p className="cfg-note">
             {sidecar?.running
-              ? `Rodando (PID ${sidecar.info?.pid}). O app fecha o processo junto.`
+              ? `${t('cfg.scRunning')} (PID ${sidecar.info?.pid}). ${t('cfg.scKillNote')}`
               : sidecar?.needsDownload
-                ? <>JRE + JAR (~220MB) ainda não baixados — <strong>sob demanda, com SHA-256.</strong></>
-                : 'Parado.'}
+                ? <>{t('cfg.scNeedDl')}</>
+                : t('cfg.scStopped')}
           </p>
           {dlProgress && (
             <p className="cfg-progress">{dlLabel()}</p>
           )}
           <div className="cfg-row">
-            <span className="cfg-row__label">{sidecar?.running ? 'Motor em execução' : sidecar?.needsDownload ? 'Baixar o motor' : 'Subir o motor oculto'}</span>
+            <span className="cfg-row__label">{sidecar?.running ? t('cfg.scRunning') : sidecar?.needsDownload ? t('cfg.scDownload') : t('cfg.scStart')}</span>
             <span className="cfg-row__actions">
               <button
                 className="online-backup__button online-backup__button--primary"
                 onClick={sidecar?.running ? handleSidecarStop : sidecar?.needsDownload ? handleSidecarDownload : handleSidecarStart}
                 disabled={sidecarBusy}
-                title={sidecar?.running ? 'Parar motor' : sidecar?.needsDownload ? 'Baixar JRE + JAR' : 'Iniciar motor'}
+                title={sidecar?.running ? t('cfg.scStop') : sidecar?.needsDownload ? t('cfg.scDownloadTitle') : t('cfg.scStart')}
               >
                 <span className="material-symbols-outlined">{sidecar?.running ? 'stop' : sidecar?.needsDownload ? 'download' : 'play_arrow'}</span>
-                {sidecar?.running ? 'Parar' : sidecar?.needsDownload ? 'Baixar' : 'Iniciar'}
+                {sidecar?.running ? t('cfg.scStopBtn') : sidecar?.needsDownload ? t('cfg.scDownloadBtn') : t('cfg.scStartBtn')}
               </button>
-              <button className="online-backup__button" onClick={refreshSidecar} title="Atualizar status">
+              <button className="online-backup__button" onClick={refreshSidecar} title={t('cfg.refreshStatus')}>
                 <span className="material-symbols-outlined">refresh</span>
-                Status
+                {t('cfg.statusBtn')}
               </button>
             </span>
           </div>
           {!sidecar?.needsDownload && (
             <div className="cfg-row">
-              <span className="cfg-row__label">WebView p/ Cloudflare<small>Resolve Comix e afins. Baixa ~260MB de Chromium no primeiro uso.</small></span>
+              <span className="cfg-row__label">{t('cfg.kcefLabel')}<small>{t('cfg.kcefHint')}</small></span>
               <span className="cfg-row__actions">
                 <button
                   className="online-backup__button"
                   onClick={handleSidecarKcef}
                   disabled={sidecarBusy}
-                  title={sidecar?.kcef ? 'Desligar WebView' : 'Ligar WebView'}
+                  title={sidecar?.kcef ? t('cfg.kcefTurnOff') : t('cfg.kcefTurnOn')}
                 >
                   <span className="material-symbols-outlined">{sidecar?.kcef ? 'toggle_on' : 'toggle_off'}</span>
-                  {sidecar?.kcef ? 'Ligado' : 'Desligado'}
+                  {sidecar?.kcef ? t('cfg.kcefOn') : t('cfg.kcefOff')}
                 </button>
               </span>
             </div>
@@ -486,14 +484,13 @@ export default function SettingsScreen() {
       <Section
         id="library"
         num={numOf('library')}
-        title="Repositórios de extensões"
+        title={t('cfg.secRepos')}
         hint={`${repos.length} repos`}
         open={openSection === 'library'}
         onToggle={() => toggleSection('library')}
       >
         <p className="cfg-note">
-          O Sumi sai vazio. Cole o link do <strong>index.json</strong> do repositório
-          (Keiyoushi ou outro compatível com Mihon).
+          {t('cfg.reposHintA')} <strong>index.json</strong> {t('cfg.reposHintB')}
         </p>
         <div className="ext-manager__search">
           <span className="material-symbols-outlined">add_link</span>
@@ -502,13 +499,13 @@ export default function SettingsScreen() {
             value={repoInput}
             onChange={(e) => setRepoInput(e.target.value)}
             placeholder="https://…/repo/index.json"
-            aria-label="Link do repositório"
+            aria-label={t('cfg.repoLinkLabel')}
           />
           <button
             className="ext-manager__search-clear"
             onClick={handleAddRepo}
             disabled={busy || !repoInput.trim()}
-            title="Adicionar repositório"
+            title={t('cfg.repoAdd')}
           >
             <span className="material-symbols-outlined">add</span>
           </button>
@@ -516,12 +513,12 @@ export default function SettingsScreen() {
         {reposLoading ? (
           <div className="ext-manager__loading">
             <div className="spinner" />
-            <p>Carregando repositórios...</p>
+            <p>{t('cfg.reposLoading')}</p>
           </div>
         ) : repos.length === 0 ? (
           <div className="ext-manager__empty">
             <span className="material-symbols-outlined">store</span>
-            <p>Nenhum repositório adicionado</p>
+            <p>{t('cfg.reposEmpty')}</p>
           </div>
         ) : (
           <div className="ext-list">
@@ -532,7 +529,7 @@ export default function SettingsScreen() {
                 </div>
                 <div className="ext-card__info">
                   <div className="ext-card__name-row">
-                    <h3 className="ext-card__name">{repo.name || 'Repositório'}</h3>
+                    <h3 className="ext-card__name">{repo.name || t('cfg.repoFallback')}</h3>
                   </div>
                   <p className="ext-card__url">{repo.indexUrl}</p>
                 </div>
@@ -541,7 +538,7 @@ export default function SettingsScreen() {
                     className="ext-card__btn ext-card__btn--uninstall"
                     onClick={() => handleRemoveRepo(repo.indexUrl)}
                     disabled={busy}
-                    title="Remover repositório"
+                    title={t('cfg.repoRemove')}
                   >
                     <span className="material-symbols-outlined">delete</span>
                   </button>
@@ -556,7 +553,7 @@ export default function SettingsScreen() {
         <Section
           id="updates"
           num={numOf('updates')}
-          title="Atualizações"
+          title={t('cfg.secUpdates')}
           hint={updateInfo ? `v${updateInfo.version} nova` : appVersion ? `v${appVersion}` : ''}
           hintTone={updateInfo ? 'warn' : ''}
           open={openSection === 'updates'}
@@ -564,8 +561,8 @@ export default function SettingsScreen() {
         >
           <p className="cfg-note">
             {updateInfo
-              ? <>Nova versão <strong>v{updateInfo.version}</strong> disponível{updateInfo.date ? ` (${updateInfo.date.slice(0, 10)})` : ''}.</>
-              : 'Verifica releases no GitHub e instala por cima (sem duplicar).'}
+              ? <>{t('cfg.updateAvailable')} <strong>v{updateInfo.version}</strong>{updateInfo.date ? ` (${updateInfo.date.slice(0, 10)})` : ''}.</>
+              : t('cfg.updCheckNow')}
           </p>
           {updateInfo?.body && (
             <p className="cfg-note">{updateInfo.body.slice(0, 600)}</p>
@@ -574,16 +571,16 @@ export default function SettingsScreen() {
             <p className="cfg-progress">{upLabel()}</p>
           )}
           <div className="cfg-row">
-            <span className="cfg-row__label">{updateInfo ? `Instalar v${updateInfo.version}` : 'Buscar atualizações'}</span>
+            <span className="cfg-row__label">{updateInfo ? `${t('cfg.updInstall')} v${updateInfo.version}` : t('cfg.updCheckTitle')}</span>
             <span className="cfg-row__actions">
               <button
                 className="online-backup__button online-backup__button--primary"
                 onClick={updateInfo ? handleInstallUpdate : handleCheckUpdates}
                 disabled={updateBusy}
-                title={updateInfo ? 'Baixar e instalar' : 'Verificar atualizações'}
+                title={updateInfo ? t('cfg.updDownloadInstall') : t('cfg.updCheckTitle')}
               >
                 <span className="material-symbols-outlined">{updateInfo ? 'download' : 'refresh'}</span>
-                {updateInfo ? 'Instalar' : 'Verificar'}
+                {updateInfo ? t('cfg.updInstall') : t('cfg.updCheckTitle')}
               </button>
             </span>
           </div>
@@ -593,40 +590,40 @@ export default function SettingsScreen() {
       <Section
         id="data"
         num={numOf('data')}
-        title="Dados e cache"
+        title={t('cfg.secData')}
         hint=""
         open={openSection === 'data'}
         onToggle={() => toggleSection('data')}
       >
         <div className="cfg-row">
-          <span className="cfg-row__label">Limpar caches<small>Seguro. Configs e biblioteca intactas.</small></span>
+          <span className="cfg-row__label">{t('cfg.cacheLabel')}<small>{t('cfg.cacheHint')}</small></span>
           <span className="cfg-row__actions">
             <button
               className="online-backup__button"
               onClick={handleClearCaches}
               disabled={maintBusy}
-              title="Limpar caches"
+              title={t('cfg.cacheLabel')}
             >
               <span className="material-symbols-outlined">mop</span>
-              Limpar
+              {t('cfg.cacheBtn')}
             </button>
           </span>
         </div>
         {isDesktop && (
           <div className="cfg-row">
             <span className="cfg-row__label">
-              {wipeArmed ? 'APAGA TUDO: biblioteca, downloads, repos e configs. Clique de novo p/ confirmar.' : 'Apagar todos os dados'}
-              <small>{wipeArmed && wipeBytes ? `~${formatBytes(wipeBytes)} — JRE+JAR mantidos.` : 'JRE+JAR mantidos.'}</small>
+              {wipeArmed ? t('cfg.wipeArmed') : t('cfg.wipeLabel')}
+              <small>{wipeArmed && wipeBytes ? `~${formatBytes(wipeBytes)} — ` : ''}{t('cfg.wipeHint')}</small>
             </span>
             <span className="cfg-row__actions">
               <button
                 className="online-backup__button online-backup__button--primary"
                 onClick={handleWipe}
                 disabled={maintBusy}
-                title="Apagar todos os dados"
+                title={t('cfg.wipeLabel')}
               >
                 <span className="material-symbols-outlined">{wipeArmed ? 'warning' : 'delete_forever'}</span>
-                {wipeArmed ? 'Confirmar' : 'Apagar'}
+                {wipeArmed ? t('cfg.wipeConfirm') : t('cfg.wipeBtn')}
               </button>
             </span>
           </div>

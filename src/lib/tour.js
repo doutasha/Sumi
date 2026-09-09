@@ -35,6 +35,7 @@ export function tourSteps(isDesktop) {
     { id: 'history', view: 'history', selector: '[data-tour="nav-history"]', titleKey: 'tour.history.title', textKey: 'tour.history.text' },
     { id: 'extensions', view: 'extensions', selector: '[data-tour="nav-extensions"]', titleKey: 'tour.extensions.title', textKey: 'tour.extensions.text' },
     { id: 'search', view: 'search', selector: '[data-tour="nav-search"]', titleKey: 'tour.search.title', textKey: 'tour.search.text' },
+    { id: 'updates', view: 'updates', selector: '[data-tour="nav-updates"]', titleKey: 'tour.updates.title', textKey: 'tour.updates.text' },
     { id: 'motor', view: 'settings', section: 'motor', selector: '[data-tour="cfg-motor"]', titleKey: 'tour.motor.title', textKey: 'tour.motor.text' },
   ];
   if (isDesktop) {

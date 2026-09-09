@@ -7,13 +7,14 @@ import {
 import { parseTachibk } from '../lib/parser/tachibk.js';
 import { importBackup, isLibraryEntry } from '../lib/parser/library.js';
 import { confirmDialog } from './Toast.jsx';
+import { t } from '../lib/i18n.js';
 
 const METRICS = [
-  { key: 'favorites', label: 'biblioteca' },
-  { key: 'history', label: 'historico' },
-  { key: 'extensions', label: 'extensoes' },
-  { key: 'categories', label: 'categorias' },
-  { key: 'sources', label: 'fontes' },
+  { key: 'favorites', labelKey: 'bk.m.library' },
+  { key: 'history', labelKey: 'bk.m.history' },
+  { key: 'extensions', labelKey: 'bk.m.extensions' },
+  { key: 'categories', labelKey: 'bk.m.categories' },
+  { key: 'sources', labelKey: 'bk.m.sources' },
 ];
 
 function backupFileName() {
@@ -40,9 +41,9 @@ export default function OnlineBackup({ onRestore }) {
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      setStatus({ type: 'success', text: 'Backup exportado.' });
+      setStatus({ type: 'success', text: t('bk.exported') });
     } catch (err) {
-      setStatus({ type: 'error', text: err.message || 'Falha ao exportar backup.' });
+      setStatus({ type: 'error', text: err.message || t('bk.exportFail') });
     }
   };
 
@@ -54,9 +55,9 @@ export default function OnlineBackup({ onRestore }) {
       const text = await file.text();
       const backup = JSON.parse(text);
       const confirmed = await confirmDialog({
-        title: 'Restaurar backup?',
-        body: 'Substitui biblioteca, progresso, fontes e extensões instaladas neste navegador.',
-        confirmLabel: 'Restaurar',
+        title: t('bk.restoreTitle'),
+        body: t('bk.restoreBody'),
+        confirmLabel: t('bk.restore'),
       });
 
       if (!confirmed) return;
@@ -65,10 +66,10 @@ export default function OnlineBackup({ onRestore }) {
       onRestore?.();
       setStatus({
         type: 'success',
-        text: `Backup restaurado: ${restored.favorites} titulos, ${restored.extensions} extensoes.`,
+        text: `${t('bk.restoredCount')} ${restored.favorites} ${t('bk.m.library')}, ${restored.extensions} ${t('bk.m.extensions')}.`,
       });
     } catch (err) {
-      setStatus({ type: 'error', text: err.message || 'Falha ao restaurar backup.' });
+      setStatus({ type: 'error', text: err.message || t('bk.restoreFail') });
     } finally {
       event.target.value = '';
     }
@@ -81,9 +82,9 @@ export default function OnlineBackup({ onRestore }) {
       const parsed = await parseTachibk(await file.arrayBuffer());
       const favs = parsed.manga.filter((m) => isLibraryEntry(m)).length;
       const confirmed = await confirmDialog({
-        title: 'Importar do Mihon?',
-        body: `${favs} favoritos em ${parsed.manga.length} títulos. Só entra o que tiver fonte instalada.`,
-        confirmLabel: 'Importar',
+        title: t('bk.importTitle'),
+        body: `${favs} ${t('bk.favorites')}. ${t('bk.mihonHint')}`,
+        confirmLabel: t('bk.importConfirm'),
       });
       if (!confirmed) return;
       setImportProgress({ done: 0, total: favs, current: '' });
@@ -95,7 +96,7 @@ export default function OnlineBackup({ onRestore }) {
       setStatus({ type: report.errors.length ? 'error' : 'success', text: reportText(report) });
     } catch (err) {
       setImportProgress(null);
-      setStatus({ type: 'error', text: err.message || 'Falha ao importar .tachibk.' });
+      setStatus({ type: 'error', text: err.message || t('bk.importFail') });
     } finally {
       event.target.value = '';
     }
@@ -104,37 +105,37 @@ export default function OnlineBackup({ onRestore }) {
   return (
     <div className="online-backup">
       <section className="online-backup__summary">
-        <div>
-          <p className="mono-cap mono-cap-shu">Dados locais</p>
-          <h2>Backup do Sumi</h2>
-        </div>
-        <div className="online-backup__metrics">
-          {METRICS.map(metric => (
-            <div key={metric.key} className="online-backup__metric">
-              <span>{summary[metric.key]}</span>
-              <small>{metric.label}</small>
-            </div>
-          ))}
-        </div>
+          <div>
+            <p className="mono-cap mono-cap-shu">{t('bk.localData')}</p>
+            <h2>{t('bk.title')}</h2>
+          </div>
+          <div className="online-backup__metrics">
+            {METRICS.map(metric => (
+              <div key={metric.key} className="online-backup__metric">
+                <span>{summary[metric.key]}</span>
+                <small>{t(metric.labelKey)}</small>
+              </div>
+            ))}
+          </div>
       </section>
 
       <section className="online-backup__panel">
         <div className="online-backup__panel-main">
-          <p className="mono-cap">Arquivo JSON local</p>
-          <h3>Biblioteca, progresso, extensoes e status</h3>
+          <p className="mono-cap">{t('bk.fileTitle')}</p>
+          <h3>{t('bk.fileSub')}</h3>
           <p>
-            O backup inclui os dados salvos neste navegador. Cache de catalogo e imagens temporarias nao entram no arquivo.
+            {t('bk.fileHint')}
           </p>
         </div>
 
         <div className="online-backup__actions">
           <button className="online-backup__button online-backup__button--primary" onClick={handleExport} type="button">
             <span className="material-symbols-outlined">download</span>
-            Exportar
+            {t('bk.export')}
           </button>
           <button className="online-backup__button" onClick={() => fileInputRef.current?.click()} type="button">
             <span className="material-symbols-outlined">upload_file</span>
-            Restaurar
+            {t('bk.restore')}
           </button>
           <input
             ref={fileInputRef}
@@ -148,15 +149,14 @@ export default function OnlineBackup({ onRestore }) {
 
       <section className="online-backup__panel">
         <div className="online-backup__panel-main">
-          <p className="mono-cap">Arquivo do Mihon (.tachibk)</p>
-          <h3>Biblioteca, lidos e categorias no motor</h3>
+          <p className="mono-cap">{t('bk.mihonFile')}</p>
+          <h3>{t('bk.mihonSub')}</h3>
           <p>
-            Só favoritos com fonte instalada entram. Capítulos lidos e
-            progresso voltam junto.
+            {t('bk.mihonHint')}
           </p>
           {importProgress && (
             <p>
-              Importando {importProgress.done}/{importProgress.total}
+              {t('bk.importing')} {importProgress.done}/{importProgress.total}
               {importProgress.current ? `: ${importProgress.current}` : ''}…
             </p>
           )}
@@ -165,7 +165,7 @@ export default function OnlineBackup({ onRestore }) {
         <div className="online-backup__actions">
           <button className="online-backup__button online-backup__button--primary" onClick={() => tachibkInputRef.current?.click()} type="button">
             <span className="material-symbols-outlined">upload_file</span>
-            Importar Mihon
+            {t('bk.importMihon')}
           </button>
           <input
             ref={tachibkInputRef}
@@ -190,9 +190,9 @@ export default function OnlineBackup({ onRestore }) {
 }
 
 function reportText(report) {
-  const parts = [`${report.imported} títulos na biblioteca`, `${report.chaptersMarked} capítulos marcados`];
-  if (report.missingSource.length) parts.push(`${report.missingSource.length} sem fonte instalada`);
-  if (report.notFound.length) parts.push(`${report.notFound.length} não achados`);
-  if (report.errors.length) parts.push(`${report.errors.length} erros`);
-  return `Mihon importado: ${parts.join(', ')}.`;
+  const parts = [`${report.imported} ${t('bk.r.titles')}`, `${report.chaptersMarked} ${t('bk.r.chapters')}`];
+  if (report.missingSource.length) parts.push(`${report.missingSource.length} ${t('bk.r.noSource')}`);
+  if (report.notFound.length) parts.push(`${report.notFound.length} ${t('bk.r.notFound')}`);
+  if (report.errors.length) parts.push(`${report.errors.length} ${t('bk.r.errors')}`);
+  return `${t('bk.r.done')} ${parts.join(', ')}.`;
 }

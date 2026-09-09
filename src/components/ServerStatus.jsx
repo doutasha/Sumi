@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { checkHealth, getSuwayomiConfig } from '../lib/parser/connection.js';
 import { refreshServerSources } from '../lib/parser/sources.js';
 import { clearServerSourceCache } from '../lib/sourceRegistry.js';
+import { t } from '../lib/i18n.js';
 
 /**
  * ServerStatus — chip de estado do motor Suwayomi + refresh das fontes.
@@ -48,21 +49,21 @@ export default function ServerStatus({ onChange }) {
   }, [refresh]);
 
   if (state.phase === 'checking') {
-    return <span className="mono-cap">Motor: verificando…</span>;
+    return <span className="mono-cap">{t('srv.checking')}</span>;
   }
   if (state.phase === 'online') {
     return (
       <span className="mono-cap" title={`${state.latencyMs}ms`}>
-        Motor: online · {state.sources} fontes
+        {t('srv.online')} · {state.sources} {t('srv.sources')}
       </span>
     );
   }
   if (state.phase === 'disabled') {
-    return <span className="mono-cap">Motor: desligado (modo leve)</span>;
+    return <span className="mono-cap">{t('srv.disabled')}</span>;
   }
   return (
-    <button type="button" className="mono-cap" onClick={refresh} title={`Tentar de novo (${state.code ?? ''})`}>
-      Motor: offline — tocar p/ reconectar
+    <button type="button" className="mono-cap" onClick={refresh} title={`${t('srv.retry')} (${state.code ?? ''})`}>
+      {t('srv.offline')}
     </button>
   );
 }

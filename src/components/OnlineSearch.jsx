@@ -3,6 +3,7 @@ import { getAllSources, getSourceImpl } from '../lib/sourceRegistry.js';
 import ServerStatus from './ServerStatus.jsx';
 import { SERVER_SOURCES_EVENT } from '../lib/parser/sources.js';
 import { getOnlineSettings, saveOnlineSettings } from '../lib/onlineStorage.js';
+import { t } from '../lib/i18n.js';
 
 function readContentLang() {
   try {
@@ -139,13 +140,13 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
     <div className="online-search-page">
       <section className="search-page-header">
         <div>
-          <p className="mono-cap mono-cap-shu">Busca / fontes ativas</p>
+          <p className="mono-cap mono-cap-shu">{t('sea.kicker')}</p>
           <div className="search-page-title-row">
-            <h2 className="search-page-title">Busca global</h2>
+            <h2 className="search-page-title">{t('sea.title')}</h2>
             <span className="search-page-jp">検索</span>
           </div>
           <p className="search-page-sub">
-            Pesquise em todas as fontes instaladas que possuem suporte a busca.
+            {t('sea.sub')}
           </p>
           <ServerStatus onChange={() => setServerTick(t => t + 1)} />
         </div>
@@ -153,11 +154,11 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
         <div className="search-page-metrics">
           <div>
             <span>{activeSources.length}</span>
-            <small>fontes</small>
+            <small>{t('sea.sources')}</small>
           </div>
           <div>
             <span>{results.length}</span>
-            <small>resultados</small>
+            <small>{t('sea.results')}</small>
           </div>
         </div>
       </section>
@@ -169,12 +170,12 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
             ref={inputRef}
             type="text"
             className="search-page-input"
-            placeholder="Nome do mangá..."
+            placeholder={t('sea.placeholder')}
             value={query}
             onChange={handleInputChange}
           />
           {query && (
-            <button type="button" className="search-page-clear" onClick={clearSearch} title="Limpar busca">
+            <button type="button" className="search-page-clear" onClick={clearSearch} title={t('sea.clearSearch')}>
               <span className="material-symbols-outlined">close</span>
             </button>
           )}
@@ -183,7 +184,7 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
 
       {activeSources.length > 0 && (
         <div className="search-page-source-list">
-          <span className="mono-cap">Fontes</span>
+          <span className="mono-cap">{t('sea.sources')}</span>
           {visibleSources.map(source => (
             <span key={source.id} className="search-page-source-chip">{source.name}</span>
           ))}
@@ -195,9 +196,9 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
               className="sb-lang-select"
               value={contentLang}
               onChange={e => handleContentLang(e.target.value)}
-              title="Idioma da busca"
+              title={t('sea.searchLang')}
             >
-              <option value="all">Todos os idiomas</option>
+              <option value="all">{t('sea.allLangs')}</option>
               {contentLangOptions.map(lang => (
                 <option key={lang} value={lang}>{lang.toUpperCase()}</option>
               ))}
@@ -220,35 +221,35 @@ export default function OnlineSearch({ sources, onMangaSelect }) {
       {loading && (
         <div className="sb-loading">
           <div className="spinner" />
-          <p>Buscando em todas as fontes...</p>
+          <p>{t('sea.searchingAll')}</p>
         </div>
       )}
 
       {!loading && searched && results.length === 0 && Object.keys(errors).length === 0 && (
         <div className="sb-error">
           <span className="material-symbols-outlined">search_off</span>
-          <p>Nenhum resultado para "<strong>{query}</strong>"</p>
+          <p>{t('sea.noResultsFor')} "<strong>{query}</strong>"</p>
         </div>
       )}
 
       {!loading && activeSources.length === 0 && (
         <div className="sb-error">
           <span className="material-symbols-outlined">extension_off</span>
-          <p>Nenhuma fonte com suporte a busca está ativa.</p>
+          <p>{t('sea.noSources')}</p>
         </div>
       )}
 
       {!loading && !searched && activeSources.length > 0 && (
         <div className="search-hint">
           <span className="material-symbols-outlined">travel_explore</span>
-          <p>Digite um nome para pesquisar nas fontes ativas.</p>
+          <p>{t('sea.hint')}</p>
         </div>
       )}
 
       {results.length > 0 && (
         <>
           <p className="search-result-count">
-            {results.length} resultado{results.length !== 1 ? 's' : ''} para "{query}"
+            {results.length} {results.length !== 1 ? t('sea.resultCountPl') : t('sea.resultCount')} {t('sea.for')} "{query}"
           </p>
           <div className="sb-grid">
             {results.map(manga => (
@@ -278,7 +279,7 @@ function SearchResultCard({ manga, onClick }) {
             <span>本</span>
           </div>
         )}
-        <span className="sb-card__source-badge">{manga.sourceName || 'Fonte'}</span>
+        <span className="sb-card__source-badge">{manga.sourceName || t('sea.sourceFallback')}</span>
       </div>
       <div className="sb-card__info">
         <p className="sb-card__title">{manga.title}</p>

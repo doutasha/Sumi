@@ -1,17 +1,18 @@
 import React from 'react';
 import { clearReadingHistory } from '../lib/onlineStorage.js';
 import { confirmDialog } from './Toast.jsx';
+import { getLocale, t } from '../lib/i18n.js';
 
 function chapterLabel(chapter) {
-  if (!chapter) return 'Capitulo';
-  const base = chapter.chapter ? `Cap. ${chapter.chapter}` : 'Oneshot';
+  if (!chapter) return t('hist.chapterFallback');
+  const base = chapter.chapter ? `${t('hist.chapterShort')} ${chapter.chapter}` : t('hist.oneshot');
   if (!chapter.title || chapter.title === base) return base;
   return `${base} - ${chapter.title}`;
 }
 
 function formatDate(timestamp) {
   if (!timestamp) return '-';
-  return new Intl.DateTimeFormat('pt-BR', {
+  return new Intl.DateTimeFormat(getLocale() === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
@@ -27,9 +28,9 @@ function progressPercent(entry) {
 export default function OnlineHistory({ history, onDataChange, onMangaOpen, onContinue }) {
   const handleClear = async () => {
     const confirmed = await confirmDialog({
-      title: 'Limpar histórico?',
-      body: 'Apaga todo o histórico de leitura.',
-      confirmLabel: 'Limpar',
+      title: t('hist.clearTitle'),
+      body: t('hist.clearBody'),
+      confirmLabel: t('hist.clearConfirm'),
     });
     if (!confirmed) return;
     clearReadingHistory();
@@ -40,18 +41,18 @@ export default function OnlineHistory({ history, onDataChange, onMangaOpen, onCo
     <div className="online-history">
       <section className="online-history__summary">
         <div>
-          <p className="mono-cap mono-cap-shu">Leitura local</p>
-          <h2>Historico recente</h2>
+          <p className="mono-cap mono-cap-shu">{t('hist.reading')}</p>
+          <h2>{t('hist.title')}</h2>
         </div>
         <div className="online-history__actions">
           <div className="online-history__metric">
             <span>{history.length}</span>
-            <small>titulos</small>
+            <small>{t('hist.titles')}</small>
           </div>
           {history.length > 0 && (
             <button className="online-history__clear" onClick={handleClear} type="button">
               <span className="material-symbols-outlined">delete_sweep</span>
-              Limpar
+              {t('hist.clear')}
             </button>
           )}
         </div>
@@ -60,8 +61,8 @@ export default function OnlineHistory({ history, onDataChange, onMangaOpen, onCo
       {history.length === 0 ? (
         <div className="online-history__empty">
           <span className="material-symbols-outlined">history</span>
-          <h3>Nenhuma leitura registrada</h3>
-          <p>Abra um capitulo para o Sumi salvar seu progresso neste PC.</p>
+          <h3>{t('hist.empty')}</h3>
+          <p>{t('hist.emptyHint')}</p>
         </div>
       ) : (
         <div className="online-history__list">
@@ -73,7 +74,7 @@ export default function OnlineHistory({ history, onDataChange, onMangaOpen, onCo
                   className="history-card__cover"
                   onClick={() => onMangaOpen?.(entry.manga)}
                   type="button"
-                  title="Abrir detalhes"
+                  title={t('hist.openDetails')}
                 >
                   {entry.manga.coverUrl ? (
                     <img src={entry.manga.coverUrl} alt={entry.manga.title} loading="lazy" />
@@ -86,7 +87,7 @@ export default function OnlineHistory({ history, onDataChange, onMangaOpen, onCo
 
                 <div className="history-card__body">
                   <div className="history-card__main">
-                    <p className="mono-cap">{entry.manga.sourceName || 'Fonte'}</p>
+                    <p className="mono-cap">{entry.manga.sourceName || t('hist.source')}</p>
                     <button
                       className="history-card__title"
                       onClick={() => onMangaOpen?.(entry.manga)}
@@ -108,11 +109,11 @@ export default function OnlineHistory({ history, onDataChange, onMangaOpen, onCo
 
                   <div className="history-card__footer">
                     <span>
-                      Pag. {entry.pageIndex + 1}{entry.totalPages ? ` / ${entry.totalPages}` : ''}
+                      {t('hist.page')} {entry.pageIndex + 1}{entry.totalPages ? ` / ${entry.totalPages}` : ''}
                     </span>
                     <button className="history-card__continue" onClick={() => onContinue?.(entry)} type="button">
                       <span className="material-symbols-outlined">play_arrow</span>
-                      Continuar
+                      {t('hist.continue')}
                     </button>
                   </div>
                 </div>
