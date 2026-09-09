@@ -32,3 +32,10 @@ direitos, abra uma issue e responderemos.
 
 O desenvolvedor desta aplicação não possui nenhuma afiliação com os
 provedores de conteúdo disponíveis.
+
+## Privacidade (sem telemetria)
+
+O Sumi não coleta nada: biblioteca, histórico e configs ficam na sua
+máquina. As únicas chamadas de rede do próprio app são as que você
+dispara (fontes, repositórios) mais a checagem de update no GitHub
+Releases.

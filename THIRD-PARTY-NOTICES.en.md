@@ -32,3 +32,10 @@ your rights, open an issue and we will respond.
 
 The developer of this application does not have any affiliation with the
 content providers available.
+
+## Privacy (no telemetry)
+
+Sumi collects nothing: library, history and settings stay on your
+machine. The only network calls the app itself makes are the ones you
+trigger (sources, repositories) plus the update check against GitHub
+Releases.
