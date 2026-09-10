@@ -11,6 +11,10 @@
     },
     "opener:default",
     "dialog:default",
+    {
+      "identifier": "fs:default",
+      "allow": [{ "path": "$DESKTOP/*" }]
+    },
     "updater:default"
   ]
 }

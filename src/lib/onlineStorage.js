@@ -15,7 +15,8 @@ const STORAGE_KEYS = {
   CHAPTER_COUNTS: 'sumi_chapter_counts',
   CHAPTER_LISTS: 'sumi_chapter_lists',
   UPDATES_SCOPE: 'sumi.updates.scope',
-  CHAPTER_UPDATES: 'sumi_chapter_updates',
+  UPDATES_CONFIG: 'sumi.updates.config',
+  UPDATES_CHECKED: 'sumi.updates.checked',
 };
 
 const EXTENSION_STORAGE_KEYS = {
@@ -371,6 +372,39 @@ export function appendUpdateFeed(items) {
 
 export function clearUpdateFeed() {
   return writeJson(STORAGE_KEYS.CHAPTER_UPDATES, []);
+}
+
+// === CONFIG DAS NOVIDADES (smart) ===
+export function getUpdatesConfig() {
+  const v = readJson(STORAGE_KEYS.UPDATES_CONFIG, null);
+  const base = {
+    autoOnOpen: true,
+    days: [0, 1, 2, 3, 4, 5, 6],
+    minIntervalHours: 24,
+    excludedCategories: [],
+    skipStatuses: [],
+  };
+  if (!v || typeof v !== 'object') return base;
+  return {
+    autoOnOpen: v.autoOnOpen !== false,
+    days: Array.isArray(v.days) && v.days.length ? v.days.filter((d) => d >= 0 && d <= 6) : [],
+    minIntervalHours: [6, 24, 72, 168].includes(v.minIntervalHours) ? v.minIntervalHours : 24,
+    excludedCategories: Array.isArray(v.excludedCategories) ? v.excludedCategories : [],
+    skipStatuses: Array.isArray(v.skipStatuses) ? v.skipStatuses : [],
+  };
+}
+
+export function saveUpdatesConfig(cfg) {
+  return writeJson(STORAGE_KEYS.UPDATES_CONFIG, cfg);
+}
+
+export function getUpdatesChecked() {
+  const data = readJson(STORAGE_KEYS.UPDATES_CHECKED, null);
+  return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+}
+
+export function saveUpdatesChecked(map) {
+  return writeJson(STORAGE_KEYS.UPDATES_CHECKED, map && typeof map === 'object' ? map : {});
 }
 
 // === ESCOPO DA ABA NOVIDADES ===

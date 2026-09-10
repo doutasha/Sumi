@@ -74,6 +74,36 @@ function matchChapter(serverChapters, backupChapter) {
 }
 
 /**
+ * Mangá do motor? (id `suwayomi:<int>`). Nativos (ex. MangaDex) buscam
+ * ao vivo e não precisam de refresh.
+ */
+export function serverMangaDbId(manga) {
+  const m = /^suwayomi:(\d+)$/.exec(String(manga?.id || ''));
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Força o motor a buscar capítulos na fonte (sem isso a lista pode vir
+ * do cache e capítulo novo nunca aparece — provado ao vivo).
+ * @returns {Promise<boolean>} true se o refresh rodou
+ */
+export async function refreshServerMangaChapters(manga, config) {
+  const id = serverMangaDbId(manga);
+  if (id == null) return false;
+  await gql(
+    `mutation RefreshCh($id: Int!) {
+      fetchMangaAndChapters(input: {id: $id, fetchManga: false, fetchChapters: true}) {
+        clientMutationId
+      }
+    }`,
+    { id },
+    config,
+    120000,
+  );
+  return true;
+}
+
+/**
  * Acha o id do mangá no servidor: SEARCH por título (até 3 págs) + match
  * exato de URL. @returns {Promise<number|null>}
  */

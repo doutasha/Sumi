@@ -22,6 +22,7 @@ futures-util = "0.3.34"
 zip = "4.2.0"
 sha2 = "0.10.9"
 tauri-plugin-updater = "2.11.0"
+tauri-plugin-fs = "2.5.2"
 
 [features]
 # by default Tauri runs in production mode

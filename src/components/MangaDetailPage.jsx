@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getSourceImpl } from '../lib/sourceRegistry.js';
+import { refreshServerMangaChapters } from '../lib/parser/library.js';
 import {
   addFavorite,
   getCategories,
@@ -504,6 +505,9 @@ export default function MangaDetailPage({ manga, onChapterSelect, onBack, onData
               <span className="material-symbols-outlined">
                 {sortDesc ? 'south' : 'north'}
               </span>
+            </button>
+            <button className="sort-btn" onClick={async () => { try { await refreshServerMangaChapters(manga); } catch { /* segue com o cache */ } loadChapters(language, { force: true }); }} title={t('det.refreshChapters')}>
+              <span className="material-symbols-outlined">sync</span>
             </button>
           </div>
         </div>

@@ -642,8 +642,39 @@
 }
 
 .cat-checkbox input {
-  accent-color: var(--shu);
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--ink-4);
+  border-radius: 0;
+  cursor: pointer;
+  display: grid;
+  flex-shrink: 0;
+  height: 18px;
   margin: 0;
+  place-content: center;
+  width: 18px;
+}
+
+.cat-checkbox input:hover {
+  border-color: var(--paper-2);
+}
+
+.cat-checkbox input:checked {
+  background: var(--shu);
+  border-color: var(--shu);
+}
+
+.cat-checkbox input:checked::after {
+  color: var(--paper-0);
+  content: '✓';
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.cat-checkbox input:focus-visible {
+  outline: 1px solid var(--shu);
+  outline-offset: 2px;
 }
 
 .modal__hint {
